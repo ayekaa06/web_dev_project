@@ -1,0 +1,26 @@
+<div [style.background]="theme.bg" [style.color]="theme.text" class="page">
+  <div class="hero">
+    <span class="beta">Beta</span>
+    <h1 class="title">Найди идеальную<br/>AI модель</h1>
+    <p class="subtitle">Каталог AI моделей с бенчмарками, сравнением и персональными заметками</p>
+    <div class="btns">
+      <a routerLink="/catalog" class="btn-primary">Открыть каталог</a>
+      <a routerLink="/compare" class="btn-outline">Сравнить модели</a>
+    </div>
+  </div>
+
+  <div class="features">
+    @for (f of features; track f.title) {
+      <div class="feature-card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+        <div class="icon">{{ f.icon }}</div>
+        <h3>{{ f.title }}</h3>
+        <p>{{ f.desc }}</p>
+      </div>
+    }
+  </div>
+
+  <div class="cta">
+    <h2>Готов начать?</h2>
+    <a routerLink="/catalog" class="btn-primary">Перейти в каталог</a>
+  </div>
+</div>

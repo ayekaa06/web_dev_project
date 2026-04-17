@@ -1,0 +1,21 @@
+<div class="container" [style.background]="theme.bg" [style.color]="theme.text">
+  <a routerLink="/catalog" class="back">nazad</a>
+  <h1>Избранное</h1>
+  <p style="opacity: 0.5">{{ saved.length }} моделей сохранено</p>
+
+  @if (saved.length === 0) {
+    <div class="empty">
+      <p style="font-size: 48px">🤍</p>
+      <p>Вы ещё ничего не сохранили</p>
+      <a routerLink="/catalog" class="link">Перейти в каталог</a>
+    </div>
+  }
+
+  @if (saved.length > 0) {
+    <div class="grid">
+      @for (m of saved; track m.id) {
+        <app-model-card [model]="m" />
+      }
+    </div>
+  }
+</div>

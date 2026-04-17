@@ -1,0 +1,38 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 30px;
+  border-bottom: 1px solid #1e293b;
+}
+.logo {
+  color: #38bdf8;
+  font-weight: bold;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-decoration: none;
+}
+.links {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.links a {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+  padding-bottom: 4px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s;
+}
+.links a.active {
+  color: #38bdf8 !important;
+  border-bottom: 2px solid #38bdf8;
+}
+.theme-btn {
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 16px;
+}

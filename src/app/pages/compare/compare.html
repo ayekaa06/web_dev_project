@@ -1,0 +1,49 @@
+<div class="container" [style.background]="theme.bg" [style.color]="theme.text">
+  <a routerLink="/catalog" class="back">nazad</a>
+  <h1>Сравнение моделей</h1>
+  <p style="opacity: 0.5">Выберите до 3 моделей</p>
+
+  <div class="chips">
+    @for (m of models; track m.id) {
+      <button
+        (click)="toggle(m)"
+        [style.background]="isSelected(m) ? '#38bdf8' : theme.input"
+        [style.color]="isSelected(m) ? '#000' : theme.text"
+        [style.opacity]="!isSelected(m) && selected.length === 3 ? '0.4' : '1'"
+        class="chip"
+      >{{ isSelected(m) ? '✓ ' : '' }}{{ m.name }}</button>
+    }
+  </div>
+
+  @if (selected.length >= 2) {
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="th">Параметр</th>
+            @for (m of selected; track m.id) {
+              <th class="th">{{ m.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of fields; track f.key) {
+            <tr>
+              <td class="td-label">{{ f.label }}</td>
+              @for (m of selected; track m.id) {
+                <td class="td">{{ getValue(m, f.key) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (selected.length < 2) {
+    <div class="empty">
+      <p style="font-size: 40px">📊</p>
+      <p>Выберите минимум 2 модели</p>
+    </div>
+  }
+</div>
