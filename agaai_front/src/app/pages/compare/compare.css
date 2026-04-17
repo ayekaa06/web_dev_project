@@ -1,0 +1,59 @@
+.container {
+  padding: 30px;
+  min-height: 100vh;
+  font-family: system-ui;
+}
+.back {
+  color: #38bdf8;
+  text-decoration: none;
+  font-size: 14px;
+  opacity: 0.8;
+}
+.chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.table-wrap {
+  margin-top: 30px;
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.th {
+  padding: 14px 20px;
+  background: #1e293b;
+  color: #38bdf8;
+  text-align: left;
+  border-bottom: 2px solid #334155;
+}
+.td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #1e293b;
+  font-size: 14px;
+  opacity: 0.85;
+}
+.td-label {
+  padding: 14px 20px;
+  border-bottom: 1px solid #1e293b;
+  font-weight: bold;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+.empty {
+  text-align: center;
+  margin-top: 80px;
+  opacity: 0.5;
+}

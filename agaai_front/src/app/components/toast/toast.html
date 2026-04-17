@@ -1,0 +1,7 @@
+<div class="toast-wrapper">
+  @for (t of toasts; track t.id) {
+    <div class="toast" [class.error]="t.type === 'error'">
+      {{ t.type === 'success' ? '✓' : '✕' }} {{ t.message }}
+    </div>
+  }
+</div>

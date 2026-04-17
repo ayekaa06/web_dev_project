@@ -1,0 +1,11 @@
+<nav [style.background]="theme.nav" [style.border-bottom]="'1px solid ' + theme.border" class="navbar">
+  <a routerLink="/" class="logo">AGAAI</a>
+  <div class="links">
+    <a routerLink="/catalog" routerLinkActive="active" [routerLinkActiveOptions]="{exact: false}" [style.color]="theme.subtext">Каталог</a>
+    <a routerLink="/favorites" routerLinkActive="active" [style.color]="theme.subtext">Избранное</a>
+    <a routerLink="/compare" routerLinkActive="active" [style.color]="theme.subtext">Сравнение</a>
+    <button (click)="theme.toggle()" [style.background]="theme.isDark() ? '#1e293b' : '#e2e8f0'" class="theme-btn">
+      {{ theme.isDark() ? '☀️' : '🌙' }}
+    </button>
+  </div>
+</nav>

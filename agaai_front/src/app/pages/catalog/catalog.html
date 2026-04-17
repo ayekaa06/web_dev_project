@@ -1,0 +1,35 @@
+<div class="container" [style.background]="theme.bg" [style.color]="theme.text">
+  <h1>AI Model Index</h1>
+  <p style="opacity: 0.6">Explore AI models</p>
+
+  <input
+    class="search"
+    placeholder="Search..."
+    [(ngModel)]="search"
+    (ngModelChange)="onSearch()"
+    [style.background]="theme.input"
+    [style.color]="theme.text"
+    [style.border]="'1px solid ' + theme.border"
+  />
+
+  <div class="filters">
+    @for (f of filters; track f) {
+      <button
+        (click)="setFilter(f)"
+        [style.background]="filter === f ? '#38bdf8' : theme.input"
+        [style.color]="filter === f ? '#000' : theme.text"
+        class="filter-btn"
+      >{{ f }}</button>
+    }
+  </div>
+
+  <div class="grid" [style.opacity]="visible ? 1 : 0" [style.transform]="visible ? 'translateY(0)' : 'translateY(10px)'">
+    @for (m of filtered; track m.id) {
+      <app-model-card [model]="m" />
+    }
+  </div>
+
+  @if (filtered.length === 0 && visible) {
+    <p class="empty">Ничего не найдено</p>
+  }
+</div>
