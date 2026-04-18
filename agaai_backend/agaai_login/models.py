@@ -1,11 +1,11 @@
-import uuid
+import uuid6
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 
 
-class UserManager(BaseUserManager):
+class CustomUserManager(BaseUserManager):
     use_in_migrations = True
 
     def _create_user(self, username, email, password, **extra_fields):
@@ -43,7 +43,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True,
-                          default=uuid.uuid7,
+                          default=uuid6.uuid7,
                           editable=False,
                           unique=True)
     username = models.CharField(max_length=150, unique=False)
@@ -54,10 +54,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     peers = models.JSONField(default=list, blank=True)
     social = models.JSONField(default=list, blank=True)
 
-    objects = UserManager()
+    objects = CustomUserManager()
 
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email", "password"]
+    USERNAME_FIELD = "email"
+    EMAIL_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
 
     class Meta:
         verbose_name = "user"
