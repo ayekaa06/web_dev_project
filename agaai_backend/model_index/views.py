@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import MLModelRecord, Benchmark, Prompt
@@ -12,7 +12,7 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
         'architecture', 'benchmarks', 'prompts'
     )
     serializer_class = MLModelRecordSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'], url_path='add-benchmark')
     def add_benchmark(self, request, pk=None):
@@ -90,10 +90,10 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
 class BenchmarkViewSet(viewsets.ModelViewSet):
     queryset = Benchmark.objects.all()
     serializer_class = BenchmarkSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
 
 class PromptViewSet(viewsets.ModelViewSet):
     queryset = Prompt.objects.all()
     serializer_class = PromptSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
