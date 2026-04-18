@@ -1,14 +1,28 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { Landing } from './pages/landing/landing';
 import { Catalog } from './pages/catalog/catalog';
 import { ModelPage } from './pages/model-page/model-page';
 import { Favorites } from './pages/favorites/favorites';
 import { Compare } from './pages/compare/compare';
+import { LoginPage } from './pages/login-page/login-page';
+
+const authGuard = () => {
+  const router = inject(Router);
+  return localStorage.getItem('auth_token') ? true : router.parseUrl('/login');
+};
+
+const redirectIfAuthenticated = () => {
+  const router = inject(Router);
+  return localStorage.getItem('auth_token') ? router.parseUrl('/') : true;
+};
 
 export const routes: Routes = [
-  { path: '', component: Landing },
-  { path: 'catalog', component: Catalog },
-  { path: 'models/:id', component: ModelPage },
-  { path: 'favorites', component: Favorites },
-  { path: 'compare', component: Compare }
+  { path: 'login', component: LoginPage, canActivate: [redirectIfAuthenticated] },
+  { path: '', pathMatch: 'full', component: Landing, canActivate: [authGuard] },
+  { path: 'catalog', component: Catalog, canActivate: [authGuard] },
+  { path: 'models/:id', component: ModelPage, canActivate: [authGuard] },
+  { path: 'favorites', component: Favorites, canActivate: [authGuard] },
+  { path: 'compare', component: Compare, canActivate: [authGuard] },
+  { path: '**', redirectTo: '' }
 ];

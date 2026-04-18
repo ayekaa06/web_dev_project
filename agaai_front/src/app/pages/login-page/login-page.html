@@ -1,0 +1,52 @@
+<div class="page login-page">
+  <div class="login-panel">
+    <div class="header">
+      <span class="badge">Welcome</span>
+      <h1>Sign in or create an account</h1>
+      <p>Авторизуйтесь, чтобы продолжить работу с каталогом моделей.</p>
+    </div>
+
+    <div class="mode-switch">
+      <button type="button" [class.active]="mode === 'login'" (click)="switchMode('login')">Login</button>
+      <button type="button" [class.active]="mode === 'register'" (click)="switchMode('register')">Register</button>
+    </div>
+
+    <form (ngSubmit)="submit()" class="form-card">
+      <div *ngIf="mode === 'register'" class="field">
+        <label>
+          Full name
+          <input type="text" name="name" [(ngModel)]="formData.name" placeholder="Your name" />
+        </label>
+      </div>
+
+      <div class="field">
+        <label>
+          Email
+          <input type="email" name="email" [(ngModel)]="formData.email" placeholder="you@example.com" />
+        </label>
+      </div>
+
+      <div class="field">
+        <label>
+          Password
+          <input type="password" name="password" [(ngModel)]="formData.password" placeholder="Password" />
+        </label>
+      </div>
+
+      <div *ngIf="mode === 'register'" class="field">
+        <label>
+          Confirm password
+          <input type="password" name="confirm" [(ngModel)]="formData.confirm" placeholder="Confirm password" />
+        </label>
+      </div>
+
+      <button class="btn-primary" type="submit">{{ mode === 'login' ? 'Login' : 'Register' }}</button>
+
+      <button type="button" class="btn-link" (click)="switchMode(mode === 'login' ? 'register' : 'login')">
+        {{ mode === 'login' ? 'Create an account' : 'Already have an account?' }}
+      </button>
+
+      <p class="error" *ngIf="message">{{ message }}</p>
+    </form>
+  </div>
+</div>

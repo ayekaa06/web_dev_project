@@ -36,6 +36,13 @@ export class Compare {
   }
 
   getValue(model: Model, key: string): string {
-    return (model as any)[key];
+    const value = (model as any)[key];
+    if (key === 'architecture' && Array.isArray(value)) {
+      return value.join(', ');
+    }
+    if (key === 'benchmarks' && Array.isArray(value)) {
+      return value.map(b => `${b.name}: ${b.value}%`).join(', ');
+    }
+    return value || '';
   }
 }

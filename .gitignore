@@ -1,2 +1,47 @@
 wdevenv
+<<<<<<< HEAD
 .env
+=======
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff
+*.log
+db.sqlite3
+db.sqlite3-journal
+
+# Static & media 
+staticfiles/
+media/
+
+# Environment variables
+.env
+
+# Django cache
+*.cache
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Angular build output
+dist/
+build/
+.tmp/
+.out-tsc/
+
+# Angular cache
+.angular/
+
+src/environments/environment*.ts
+
+# VS Code
+.vscode/
+>>>>>>> feat/login_completed
