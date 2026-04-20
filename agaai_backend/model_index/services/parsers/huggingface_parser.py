@@ -296,7 +296,65 @@ class HuggingFaceParser(BaseParser):
         return results
 
     # ── Config fetcher ────────────────────────────────────────────────────
+    def extract_benchmarks_from_readme(self, readme: str) -> list[dict]:
+        if not readme or "Evaluation results" not in readme:
+            return []
 
+        # Берем текст после заголовка
+        section = readme.split("Evaluation results")[1]
+
+        # Собираем все строки таблицы
+        lines = [l.strip() for l in section.split("\n") if l.strip().startswith("|")]
+
+        # В Markdown таблице минимум 3 строки: заголовки, разделитель |---| и данные
+        if len(lines) < 3:
+            return []
+
+        # Парсим заголовки (первая строка)
+        headers = [h.strip().lower() for h in lines[0].split("|") if h.strip()]
+        
+        # Парсим значения (пропускаем вторую строку с дефисами и берем третью)
+        values = [v.strip() for v in lines[2].split("|") if v.strip()]
+
+        # Убираем колонку "Task", если она есть в начале
+        if headers and headers[0] == "task":
+            headers = headers[1:]
+            # Если в строке значений первая ячейка была пустой (как в BERT), 
+            # она уже могла отфильтроваться или сместиться. 
+            # Проверим соответствие длины.
+            if len(values) > len(headers):
+                values = values[1:]
+
+        results = []
+
+        for h, v in zip(headers, values):
+            # Пропускаем ненужные колонки
+            if h in ("task", "average"):
+                continue
+
+            score = None
+            # Обработка сдвоенных метрик (например, 84.6/83.4)
+            if "/" in v:
+                try:
+                    parts = [float(p.strip()) for p in v.split("/")]
+                    score = sum(parts) / len(parts)
+                except (ValueError, ZeroDivisionError):
+                    score = None
+            else:
+                try:
+                    score = float(v)
+                except ValueError:
+                    score = None
+
+            results.append({
+                "name": h.upper(), # Приводим к верхнему регистру (MNLI, QQP)
+                "score": score,
+                "score_str": v,
+                "category": "benchmark",
+                "source": "readme"
+            })
+
+        return results
     def _fetch_config(self, model_id: str) -> dict:
         """Fetch config.json for architectural details."""
         rate_limiter.check(_DOMAIN)
@@ -349,6 +407,13 @@ class HuggingFaceParser(BaseParser):
         readme = self.fetch_readme(name)
         description = self.extract_description_from_readme(readme)
 
+        hf_benchmarks = self.extract_benchmarks(data)
+        if data.get("gated"):
+            readme_benchmarks = []
+        else:
+            readme_benchmarks = self.extract_benchmarks_from_readme(readme)
+        
+        benchmarks = hf_benchmarks + readme_benchmarks
         # ── Assemble result ───────────────────────────────────────────
         size_info = self.extract_model_size(data)
 
@@ -374,7 +439,7 @@ class HuggingFaceParser(BaseParser):
 
             # ── NEW: extra metadata ───────────────────────────────────
             "license":       self.extract_license(data),
-            "benchmarks":    self.extract_benchmarks(data),
+            "benchmarks": benchmarks,
             "author":        data.get("author"),
             "created_at":    data.get("createdAt"),
             "last_modified": data.get("lastModified"),
