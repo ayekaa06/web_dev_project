@@ -1,19 +1,3 @@
-"""
-HuggingFace parser — расширенная версия.
-
-Новое по сравнению с оригиналом:
-  • @parser_cache(ttl=3600)   — результаты кэшируются в Redis/LocMem
-  • rate_limiter.check(...)   — не улетаем в бан huggingface.co
-  • model_size_bytes          — реальный размер из siblings (файлы .safetensors)
-  • parameter_count           — из config.json или safetensors metadata
-  • quantization              — Q4_K_M, GPTQ, AWQ, BitsAndBytes и др.
-  • tensor_type               — float32, bfloat16, float16, int8, int4
-  • context_length            — из config.json (max_position_embeddings)
-  • architecture              — LlamaForCausalLM и т.п.
-  • license                   — из card metadata
-  • benchmarks                — eval_results из card если есть
-"""
-
 from __future__ import annotations
 
 import re
@@ -26,12 +10,10 @@ from ..utils.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
-# ── Constants ─────────────────────────────────────────────────────────────
 
 _DOMAIN = "huggingface.co"
 _API_BASE = "https://huggingface.co/api/models"
 
-# Tags we don't want to show users
 _TAG_BLACKLIST = {
     "pytorch", "tf", "jax", "rust", "onnx",
     "safetensors", "region:us", "has_space",
@@ -62,9 +44,9 @@ _DTYPE_MAP = {
 }
 
 
+
 class HuggingFaceParser(BaseParser):
 
-    # ── Helpers you already had ───────────────────────────────────────────
 
     @staticmethod
     def trim_description(text: str, max_len: int = 300) -> str | None:
@@ -115,7 +97,6 @@ class HuggingFaceParser(BaseParser):
     def clean_tags(tags: list[str]) -> list[str]:
         return [t for t in tags if not any(b in t for b in _TAG_BLACKLIST)]
 
-    # ── NEW: model size / format / hardware info ──────────────────────────
 
     @staticmethod
     def extract_model_size(data: dict) -> dict:
@@ -138,7 +119,7 @@ class HuggingFaceParser(BaseParser):
                 files.append({"name": name, "size_bytes": size})
 
         if total == 0:
-            # Fallback: safetensors metadata aggregate
+            
             st = data.get("safetensors") or {}
             total = st.get("total") or 0  # this is param count not bytes; skip
 
@@ -297,43 +278,41 @@ class HuggingFaceParser(BaseParser):
 
     # ── Config fetcher ────────────────────────────────────────────────────
     def extract_benchmarks_from_readme(self, readme: str) -> list[dict]:
-        if not readme or "Evaluation results" not in readme:
+        if not readme or "Evaluation" not in readme:
             return []
 
-        # Берем текст после заголовка
-        section = readme.split("Evaluation results")[1]
+        
+        section = readme.split("Evaluation")[1]
 
-        # Собираем все строки таблицы
+        
         lines = [l.strip() for l in section.split("\n") if l.strip().startswith("|")]
 
-        # В Markdown таблице минимум 3 строки: заголовки, разделитель |---| и данные
+        
         if len(lines) < 3:
             return []
 
-        # Парсим заголовки (первая строка)
+        
         headers = [h.strip().lower() for h in lines[0].split("|") if h.strip()]
         
-        # Парсим значения (пропускаем вторую строку с дефисами и берем третью)
+        
         values = [v.strip() for v in lines[2].split("|") if v.strip()]
 
-        # Убираем колонку "Task", если она есть в начале
+    
         if headers and headers[0] == "task":
             headers = headers[1:]
-            # Если в строке значений первая ячейка была пустой (как в BERT), 
-            # она уже могла отфильтроваться или сместиться. 
-            # Проверим соответствие длины.
+            
             if len(values) > len(headers):
                 values = values[1:]
 
         results = []
 
         for h, v in zip(headers, values):
-            # Пропускаем ненужные колонки
+            
             if h in ("task", "average"):
                 continue
 
             score = None
-            # Обработка сдвоенных метрик (например, 84.6/83.4)
+            
             if "/" in v:
                 try:
                     parts = [float(p.strip()) for p in v.split("/")]
@@ -347,7 +326,7 @@ class HuggingFaceParser(BaseParser):
                     score = None
 
             results.append({
-                "name": h.upper(), # Приводим к верхнему регистру (MNLI, QQP)
+                "name": h.upper(), 
                 "score": score,
                 "score_str": v,
                 "category": "benchmark",

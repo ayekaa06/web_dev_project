@@ -5,17 +5,17 @@ import json
 service = ModelInfoService()
 
 models = [
+    "meta-llama/Llama-3.1-70B-Instruct",
     "meta-llama/Llama-3.1-8B-Instruct",
+    "Qwen/Qwen2.5-72B-Instruct",
     "Qwen/Qwen2.5-7B-Instruct",
+    "mistralai/Mistral-Large-Instruct-2407",
+    "mistralai/Mixtral-8x22B-Instruct-v0.1",
     "mistralai/Mistral-Small-24B-Instruct-2501",
-    "mistralai/Mistral-7B-Instruct-v0.1",
-    "sentence-transformers/all-MiniLM-L6-v2",
-    "bert-base-uncased",
-    "distilbert-base-uncased",
-    "tiiuae/falcon-7b",
-    "bigscience/bloom-560m"
+    "google/gemma-2-27b-it",
+    "google/gemma-2-9b-it",
+    "tiiuae/falcon-180B-chat"
 ]
-
 DELAY = 0.2  # чуть больше чтобы не сразу словить limit
 
 success = 0
