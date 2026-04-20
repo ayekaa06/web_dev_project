@@ -1,56 +1,55 @@
-from services.model_service import ModelInfoService
-import time
 import json
+import time
+from services.model_service import ModelInfoService
 
 service = ModelInfoService()
 
-models = [
-    "meta-llama/Llama-3.1-70B-Instruct",
-    "meta-llama/Llama-3.1-8B-Instruct",
-    "Qwen/Qwen2.5-72B-Instruct",
-    "Qwen/Qwen2.5-7B-Instruct",
-    "mistralai/Mistral-Large-Instruct-2407",
-    "mistralai/Mixtral-8x22B-Instruct-v0.1",
-    "mistralai/Mistral-Small-24B-Instruct-2501",
-    "google/gemma-2-27b-it",
-    "google/gemma-2-9b-it",
-    "tiiuae/falcon-180B-chat"
+# Список моделей для проверки разных сценариев
+test_queries = [
+    "google/gemma-2-9b-it",            # Слияние данных (HF + LMSYS)
+    "hf:meta-llama/Llama-3.1-8B-it",   # Только HuggingFace (Gated)
+    "gpt-4o",                    # Только Arena ELO
+    "not-real-model-123",
+    "claude-3-5-sonnet-20240620",
+    "mistralai/Mistral-7B-Instruct-v0.3",
+    "bert-base-uncased"
 ]
-DELAY = 0.2  # чуть больше чтобы не сразу словить limit
 
-success = 0
-errors = 0
+def run_visual_test():
+    print("🚀 НАЧАЛО ИНСПЕКЦИИ МОДЕЛЕЙ\n" + "="*50)
 
-print("🚀 Testing multiple models...\n")
+    for query in test_queries:
+        print(f"\n🔍 ЗАПРОС: '{query}'")
+        
+        start_time = time.time()
+        data = service.get_model(query)
+        duration = round(time.time() - start_time, 2)
 
-for i, model in enumerate(models):
-    print(f"\n=== {model} ===")
+        # 1. Проверка на наличие данных
+        if data and data.get("name") and data.get("name") != query or (data and data.get("source")):
+            print(f"✅ Модель найдена ({duration}s)")
+            
+            # 2. Проверка источников
+            sources = data.get("source", [])
+            print(f"✅ Источники: {', '.join(sources)}")
+            
+            # 3. Проверка бенчмарков
+            benchmarks = data.get("benchmarks", [])
+            if benchmarks:
+                print(f"✅ Найдено бенчмарков: {len(benchmarks)}")
+            else:
+                print("ℹ️  Бенчмарки в README не найдены")
 
-    start = time.time()
-
-    try:
-        data = service.get_model(model)
-        duration = round(time.time() - start, 3)
-
-        if not data:
-            print(f"❌ EMPTY ({duration}s)")
-            errors += 1
-
-        elif "error" in data:
-            print(f"⚠️ {data['error']} ({duration}s)")
-            errors += 1
-
-        else:
-            print(f"✅ OK ({duration}s)")
+            # ВЫВОД ФИНАЛЬНОГО ОТВЕТА
+            print("\n📦 ФИНАЛЬНЫЙ JSON ОБЪЕКТ:")
             print(json.dumps(data, indent=2, ensure_ascii=False))
-            success += 1
+        
+        else:
+            print(f"❌ Модель не найдена или ошибка ({duration}s)")
+        
+        print("-" * 50)
 
-    except Exception as e:
-        print(f"💥 EXCEPTION: {e}")
-        errors += 1
+    print("\n🏁 ТЕСТИРОВАНИЕ ЗАВЕРШЕНО")
 
-    time.sleep(DELAY)
-
-print("\n📊 RESULT:")
-print(f"✅ Success: {success}")
-print(f"❌ Errors: {errors}")
+if __name__ == "__main__":
+    run_visual_test()
