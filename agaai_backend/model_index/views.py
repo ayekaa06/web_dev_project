@@ -3,10 +3,13 @@ from django.shortcuts import render
 
 # Create your views here.
 =======
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from django_filters.rest_framework import DjangoFilterBacken
+from .filters import MLModelRecordFilter
 
 from .models import MLModelRecord, Benchmark, Prompt
 from .serializers import MLModelRecordSerializer, BenchmarkSerializer, PromptSerializer, MLModelRecordPartialUpdateSerializer
@@ -15,9 +18,19 @@ from .serializers import MLModelRecordSerializer, BenchmarkSerializer, PromptSer
 class MLModelRecordViewSet(viewsets.ModelViewSet):
     queryset = MLModelRecord.objects.all().select_related('user_id', 'model_fullref').prefetch_related(
         'architecture', 'benchmarks', 'prompts'
-    )
+    ).distinct()
     serializer_class = MLModelRecordSerializer
     permission_classes = [IsAuthenticated]
+
+    filterset_class = MLModelRecordFilter                      # ← добавь
+    search_fields = [                                          # ← добавь
+        'description',
+        'custom_note',
+        'model_fullref__model_name',
+        'model_fullref__author',
+    ]
+    ordering_fields = ['id', 'model_fullref__model_name']      # ← добавь
+    ordering = ['id']
 
     @action(detail=True, methods=['post'], url_path='add-benchmark')
     def add_benchmark(self, request, pk=None):
