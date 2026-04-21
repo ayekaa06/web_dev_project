@@ -1,19 +1,11 @@
-<<<<<<< HEAD
-import uuid
-=======
 import uuid6
->>>>>>> feat/login_completed
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 
 
-<<<<<<< HEAD
-class UserManager(BaseUserManager):
-=======
 class CustomUserManager(BaseUserManager):
->>>>>>> feat/login_completed
     use_in_migrations = True
 
     def _create_user(self, username, email, password, **extra_fields):
@@ -51,17 +43,10 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True,
-<<<<<<< HEAD
-                          default=uuid.uuid4,
-                          editable=False,
-                          unique=True)
-    username = models.CharField(max_length=150, unique=True)
-=======
                           default=uuid6.uuid7,
                           editable=False,
                           unique=True)
     username = models.CharField(max_length=150, unique=False)
->>>>>>> feat/login_completed
     email = models.EmailField(unique=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -69,18 +54,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     peers = models.JSONField(default=list, blank=True)
     social = models.JSONField(default=list, blank=True)
 
-<<<<<<< HEAD
-    objects = UserManager()
-
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email", "password"]
-=======
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
     EMAIL_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
->>>>>>> feat/login_completed
 
     class Meta:
         verbose_name = "user"
