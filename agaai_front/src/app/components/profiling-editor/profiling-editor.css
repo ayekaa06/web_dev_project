@@ -1,0 +1,5 @@
+.editor-card { margin-top: 16px; padding: 16px; border-radius: 12px; background: #0b1220; border: 1px solid #334155; }
+.editor-card h3 { color: #38bdf8; margin-bottom: 8px; }
+.editor-card label { display:block; margin-top:8px; color:#94a3b8 }
+.editor-card select, .editor-card input { width:100%; padding:8px; border-radius:8px; background:#071024; color:#fff; border:1px solid #334155 }
+.editor-btn { margin-top:12px; padding:8px 14px; border-radius:10px; background:#38bdf8; border:none; cursor:pointer }

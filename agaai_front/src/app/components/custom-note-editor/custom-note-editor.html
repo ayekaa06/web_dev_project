@@ -1,0 +1,5 @@
+<div class="editor-card" *ngIf="model">
+  <h3>Редактировать заметку модели</h3>
+  <textarea [(ngModel)]="draft" placeholder="Введите заметку для модели..." class="editor-textarea"></textarea>
+  <button (click)="save()" class="editor-btn">Сохранить</button>
+</div>

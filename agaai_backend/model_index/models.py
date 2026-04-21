@@ -8,6 +8,7 @@ class MLModel(models.Model):
     author = models.CharField(max_length=255)
     version = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_quantized = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Model"
@@ -33,6 +34,8 @@ class MLModelRecord(models.Model):
         on_delete=models.CASCADE,
         related_name="records"
     )
+    custom_name = models.CharField(max_length=100)
+    badges = models.JSONField(default=list, blank=True)
     custom_note = models.TextField(null=True, blank=True)
     description = models.TextField(blank=False, default="")
     dependencies = models.JSONField(default=dict, blank=True)

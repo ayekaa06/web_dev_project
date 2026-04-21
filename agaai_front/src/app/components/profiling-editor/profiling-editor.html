@@ -1,0 +1,14 @@
+<div class="editor-card" *ngIf="model">
+  <h3>Добавить профильную метрику</h3>
+  <label>Metric</label>
+  <select [(ngModel)]="metric">
+    @for (m of metrics; track m) {
+      <option [value]="m">{{m}}</option>
+    }
+  </select>
+  <label>Value</label>
+  <input type="number" [(ngModel)]="value" />
+  <div class="actions">
+    <button (click)="save()" class="editor-btn">Сохранить</button>
+  </div>
+</div>

@@ -1,31 +1,71 @@
-<div *ngIf="model; else notFound" class="container" [style.background]="theme.bg" [style.color]="theme.text">
+<div *ngIf="model(); else notFound" class="container" [style.background]="theme.bg" [style.color]="theme.text">
   <a routerLink="/catalog" class="back">nazad</a>
 
   <div class="hero" [style.border]="'1px solid ' + theme.border">
     <div>
-      <span class="badge">{{ model.type }}</span>
-      <h1>{{ model.name }}</h1>
-      <p style="opacity: 0.7">{{ model.description }}</p>
+      <span class="badge">{{ model()?.badges?.join(', ') || 'No badge' }}</span>
+      <h1>{{ model()?.name }}</h1>
+      <p>Unique reference name: {{ model()?.uniq_name}}</p>
+      <p style="opacity: 0.7; margin-top: 2vh;">{{ model()?.description }}</p>
     </div>
     <button (click)="toggleSave()" class="heart-btn">{{ saved ? '❤️' : '🤍' }}</button>
   </div>
 
   <div class="grid">
     <div class="card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
-      <h3 class="card-title">Архитектура</h3>
-      <p>{{ model.architecture?.join(', ') }}</p>
+      <h3 class="card-title">Example of usage</h3>
+      <p>Location: </p>
+      <p></p>
     </div>
     <div class="card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
       <h3 class="card-title">Бенчмарки</h3>
-      <p>{{ model.benchmarks?.map(b => b.name + ': ' + b.value + '%')?.join(', ') }}</p>
+      @for (b of model()?.benchmarks; track b.name) {
+           <p>{{b.name + ': ' + b.value + '%'}}</p>
+        }
     </div>
   </div>
 
-  <div class="note-block" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+  <div *ngIf="model()?.custom_note" class="card custom-note-card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <h3 class="card-title">Custom note</h3>
+    <p>{{ model()?.custom_note }}</p>
+    <button class="add-btn" (click)="addAttribute('custom_note')">Изменить заметку</button>
+  </div>
+
+  <div *ngIf="model()?.badges?.length" class="card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <h3 class="card-title">Badges</h3>
+    <p>{{ model()?.badges?.join(', ') }}</p>
+    <button class="add-btn" (click)="addAttribute('badges')">Изменировать бейдж</button>
+  </div>
+
+  <div *ngIf="(model()?.prompts?.length || 0) > 0" class="card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <h3 class="card-title">Prompts</h3>
+    <ul>
+      @for (p of model()?.prompts || []; track p) {
+        <li>{{p}}</li>
+      }
+    </ul>
+    <button class="add-btn" (click)="addAttribute('prompts')">Изменить prompts</button>
+  </div>
+
+  <div *ngIf="missingAttributes().length" class="missing-attributes">
+    <div *ngFor="let attr of missingAttributes()" class="missing-attribute-row">
+      <button *ngIf="!isEditorOpen(attr.key)" (click)="addAttribute(attr.key)" class="add-btn">{{ attr.buttonText }}</button>
+    </div>
+  </div>
+
+  <app-custom-note-editor *ngIf="isEditorOpen('custom_note')" [model]="model()!" (saved)="onAttributeSaved($event)"></app-custom-note-editor>
+  <app-architecture-viewer *ngIf="isEditorOpen('architecture')" [architectures]="model()?.architecture" [model]="model()!"></app-architecture-viewer>
+
+  <app-badges-editor *ngIf="isEditorOpen('badges')" [model]="model()!" (saved)="onAttributeSaved($event)"></app-badges-editor>
+  <app-prompts-editor *ngIf="isEditorOpen('prompts')" [model]="model()!" (saved)="onAttributeSaved($event)"></app-prompts-editor>
+  <app-profiling-editor *ngIf="isEditorOpen('profiling')" [model]="model()!" (saved)="onAttributeSaved($event)"></app-profiling-editor>
+  <app-benchmark-editor *ngIf="isEditorOpen('benchmarks')" [model]="model()!" (saved)="onAttributeSaved($event)"></app-benchmark-editor>
+
+  <!-- <div class="note-block" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
     <h3 class="card-title">Ваши заметки</h3>
     <textarea [(ngModel)]="note" placeholder="Напишите что-нибудь..." class="textarea"></textarea>
     <button (click)="saveNote()" class="save-btn">Сохранить заметку</button>
-  </div>
+  </div> -->
 </div>
 
 <ng-template #notFound>

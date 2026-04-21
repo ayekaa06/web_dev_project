@@ -1,0 +1,7 @@
+<div class="editor-card" *ngIf="model">
+  <h3>Badge</h3>
+  <input [(ngModel)]="badge" placeholder="Single badge" />
+  <div class="actions">
+    <button (click)="save()" class="editor-btn">Сохранить</button>
+  </div>
+</div>

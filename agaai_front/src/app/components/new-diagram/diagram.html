@@ -1,0 +1,214 @@
+<!-- diagram.component.html -->
+
+<div class="diagram-shell">
+
+  <!-- ── Top toolbar ───────────────────────────────────────────────── -->
+  <header class="toolbar">
+    <div class="toolbar-left">
+      <span class="brand">DiagramJS</span>
+      <span class="summary">{{ summary() }}</span>
+    </div>
+
+    <div class="toolbar-center">
+      <button class="btn btn-add" (click)="openModal('rectangle')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="3" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="7" y1="6" x2="7" y2="10" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="5" y1="8" x2="9" y2="8" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Rectangle
+      </button>
+
+      <button class="btn btn-add" (click)="openModal('circle')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="7" y1="4" x2="7" y2="10" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="4" y1="7" x2="10" y2="7" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Circle
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <button class="btn btn-ghost" (click)="saveJSON()" title="Save to browser">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 2h8l2 2v8a1 1 0 01-1 1H3a1 1 0 01-1-1V2z" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="4" y="8" width="6" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="4" y="2" width="4" height="3" rx="0.5" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Save
+      </button>
+
+      <button class="btn btn-ghost" (click)="loadJSON()" title="Load saved">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 4v8h10V4H9L7.5 2H2z" stroke="currentColor" stroke-width="1.5"/>
+          <polyline points="4,8 7,5 10,8" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        </svg>
+        Load
+      </button>
+
+      <div class="divider"></div>
+
+      <button class="btn btn-export" (click)="exportJSON()">JSON</button>
+      <button class="btn btn-export" (click)="exportSVG()">SVG</button>
+      <button class="btn btn-export" (click)="exportPNG()">PNG</button>
+
+      <div class="divider"></div>
+
+      <button class="btn btn-danger" (click)="clearCanvas()" title="Clear all">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <polyline points="2,4 12,4" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M5 4V2h4v2M3 4l1 8h6l1-8" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Status bar ─────────────────────────────────────────────────── -->
+  <div class="status-bar" [class.visible]="statusMsg()">
+    {{ statusMsg() }}
+  </div>
+
+  <!-- ── Canvas ─────────────────────────────────────────────────────── -->
+  <div class="canvas-wrap">
+    <div #canvas class="canvas"></div>
+
+    <div class="canvas-hint" *ngIf="nodeCount() === 0">
+      <div class="hint-icon">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect x="4" y="12" width="14" height="10" rx="3" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+          <rect x="22" y="18" width="14" height="10" rx="3" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+          <line x1="18" y1="17" x2="22" y2="21" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+        </svg>
+      </div>
+      <p class="hint-text">Add a shape to get started</p>
+      <p class="hint-sub">Drag ports to connect · Right-click to delete</p>
+    </div>
+  </div>
+
+  <!-- ── Modal overlay ──────────────────────────────────────────────── -->
+  <div class="modal-overlay" [class.active]="showModal()" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h2 class="modal-title">
+          Add {{ modalShape() === 'rectangle' ? 'Rectangle' : 'Circle' }}
+        </h2>
+        <button class="modal-close" (click)="closeModal()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <line x1="3" y1="3" x2="13" y2="13" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="13" y1="3" x2="3" y2="13" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Label -->
+        <div class="field">
+          <label class="field-label">Label</label>
+          <input
+            type="text"
+            class="field-input"
+            [value]="modalLabel()"
+            (input)="modalLabel.set($any($event.target).value)"
+            placeholder="Enter label..."
+          />
+        </div>
+
+        <!-- Color -->
+        <div class="field">
+          <label class="field-label">Color</label>
+          <div class="color-row">
+            <div class="color-swatches">
+              <button
+                *ngFor="let c of presetColors"
+                class="swatch"
+                [style.background]="c"
+                [class.selected]="modalColor() === c"
+                (click)="modalColor.set(c)"
+              ></button>
+            </div>
+            <div class="color-custom">
+              <input
+                type="color"
+                class="color-picker"
+                [value]="modalColor()"
+                (input)="modalColor.set($any($event.target).value)"
+              />
+              <span class="color-hex">{{ modalColor() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Port count -->
+        <div class="field">
+          <label class="field-label">
+            Ports
+            <span class="field-value">{{ modalPortCount() }}</span>
+          </label>
+          <input
+            type="range"
+            class="field-range"
+            min="1"
+            max="8"
+            step="1"
+            [value]="modalPortCount()"
+            (input)="modalPortCount.set(+$any($event.target).value)"
+          />
+          <div class="range-ticks">
+            <span>1</span><span>2</span><span>3</span><span>4</span>
+            <span>5</span><span>6</span><span>7</span><span>8</span>
+          </div>
+        </div>
+
+        <!-- Port position -->
+        <div class="field">
+          <label class="field-label">Port placement</label>
+          <div class="radio-group">
+            <label class="radio-opt" [class.active]="modalPortPos() === 'top-bottom'">
+              <input type="radio" name="portPos" value="top-bottom"
+                [checked]="modalPortPos() === 'top-bottom'"
+                (change)="modalPortPos.set('top-bottom')" />
+              Top / Bottom
+            </label>
+            <label class="radio-opt" [class.active]="modalPortPos() === 'left-right'">
+              <input type="radio" name="portPos" value="left-right"
+                [checked]="modalPortPos() === 'left-right'"
+                (change)="modalPortPos.set('left-right')" />
+              Left / Right
+            </label>
+            <label class="radio-opt" [class.active]="modalPortPos() === 'all'">
+              <input type="radio" name="portPos" value="all"
+                [checked]="modalPortPos() === 'all'"
+                (change)="modalPortPos.set('all')" />
+              All sides
+            </label>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="field">
+          <label class="field-label">Preview</label>
+          <div class="preview-box">
+            <div
+              class="preview-shape"
+              [class.is-circle]="modalShape() === 'circle'"
+              [style.background]="modalColor()"
+            >
+              {{ modalLabel() }}
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="confirmAdd()">Add Shape</button>
+      </div>
+
+    </div><!-- /modal -->
+  </div><!-- /overlay -->
+
+</div><!-- /shell -->

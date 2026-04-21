@@ -2,15 +2,18 @@
   <h1>AI Model Index</h1>
   <p style="opacity: 0.6">Explore AI models</p>
 
-  <input
-    class="search"
-    placeholder="Search..."
-    [(ngModel)]="search"
-    (ngModelChange)="onSearch()"
-    [style.background]="theme.input"
-    [style.color]="theme.text"
-    [style.border]="'1px solid ' + theme.border"
-  />
+  <div class="toolbar-row">
+    <input
+      class="search"
+      placeholder="Search..."
+      [(ngModel)]="search"
+      (ngModelChange)="onSearch()"
+      [style.background]="theme.input"
+      [style.color]="theme.text"
+      [style.border]="'1px solid ' + theme.border"
+    />
+    <button class="add-model-btn" (click)="openModal()">Добавить модель</button>
+  </div>
 
   <div class="filters">
     @for (f of filters; track f) {
@@ -23,6 +26,65 @@
     }
   </div>
 
+  <div *ngIf="showModal" class="modal-overlay">
+    <div class="modal-card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+      <div class="modal-header">
+        <h2>Добавить новую модель</h2>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="field-row">
+        <label>ID</label>
+        <input type="number" [(ngModel)]="newModelForm.id" />
+      </div>
+      <div class="field-row">
+        <label>Name</label>
+        <input [(ngModel)]="newModelForm.name" />
+      </div>
+      <div class="field-row">
+        <label>Unique name</label>
+        <input [(ngModel)]="newModelForm.uniq_name" />
+      </div>
+      <div class="field-row">
+        <label>Description</label>
+        <textarea [(ngModel)]="newModelForm.description"></textarea>
+      </div>
+      <div class="field-row">
+        <label>Custom note</label>
+        <input [(ngModel)]="newModelForm.custom_note" />
+      </div>
+      <div class="field-row">
+        <label>Badges (comma separated)</label>
+        <input [(ngModel)]="newModelForm.badges" />
+      </div>
+      <div class="field-row">
+        <label>Prompts (comma separated)</label>
+        <input [(ngModel)]="newModelForm.prompts" />
+      </div>
+      <div class="field-row">
+        <label>Architecture (comma separated)</label>
+        <input [(ngModel)]="newModelForm.architecture" />
+      </div>
+      <div class="field-row">
+        <label>Dependencies (JSON array)</label>
+        <textarea [(ngModel)]="newModelForm.dependencies" placeholder='[ {"name":"torch","requirement":">=2.0"} ]'></textarea>
+      </div>
+      <div class="field-row">
+        <label>Benchmarks (JSON array)</label>
+        <textarea [(ngModel)]="newModelForm.benchmarks" placeholder='[ {"name":"MMLU","description":"...","value":75} ]'></textarea>
+      </div>
+      <div class="field-row">
+        <label>Profiling (JSON array)</label>
+        <textarea [(ngModel)]="newModelForm.profiling" placeholder='[ {"name":"Speed","description":"...","value":90} ]'></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="submitModel()" class="submit-btn">Отправить модель</button>
+        <button (click)="closeModal()" class="cancel-btn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
   <div class="grid" [style.opacity]="visible ? 1 : 0" [style.transform]="visible ? 'translateY(0)' : 'translateY(10px)'">
     @for (m of filtered; track m.id) {
       <app-model-card [model]="m" />
@@ -32,4 +94,9 @@
   @if (filtered.length === 0 && visible) {
     <p class="empty">Ничего не найдено</p>
   }
+
+  <!-- <div *ngIf="submittedModelJson" class="submitted-json" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <h3>Submitted model payload</h3>
+    <pre>{{ submittedModelJson }}</pre>
+  </div> -->
 </div>

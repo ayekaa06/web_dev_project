@@ -1,0 +1,14 @@
+<div class="editor-card" *ngIf="model">
+  <h3>Добавить бенчмарк</h3>
+  <label>Benchmark</label>
+  <select [(ngModel)]="benchmark">
+    @for (b of benchmarks; track b) {
+      <option [value]="b">{{b}}</option>
+    }
+  </select>
+  <label>Value (%)</label>
+  <input type="number" [(ngModel)]="value" />
+  <div class="actions">
+    <button (click)="save()" class="editor-btn">Сохранить</button>
+  </div>
+</div>

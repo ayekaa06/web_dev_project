@@ -1,7 +1,4 @@
 wdevenv
-<<<<<<< HEAD
-.env
-=======
 .env
 
 # Python
@@ -44,4 +41,3 @@ src/environments/environment*.ts
 
 # VS Code
 .vscode/
->>>>>>> feat/login_completed

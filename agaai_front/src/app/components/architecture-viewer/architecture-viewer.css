@@ -1,0 +1,13 @@
+.arch-viewer { margin-top: 16px; padding: 16px; border-radius: 12px; background: #0b1220; border: 1px solid #334155; }
+.controls { display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:12px }
+.nav { background:transparent; border:1px solid #334155; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer }
+.indicator { color:#94a3b8 }
+.slide { min-height: 180px; display:flex; align-items:center; justify-content:center }
+.slide img { max-width:100%; max-height:360px; border-radius:8px }
+.file-card { display:flex; flex-direction:column; align-items:center; gap:8px }
+.file-name { color:#fff; font-weight:600 }
+.file-type { color:#94a3b8 }
+.empty { color:#94a3b8; font-style:italic }
+.thumbnails { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap }
+.thumb { background:#071024; color:#fff; border:1px solid #334155; padding:6px 10px; border-radius:8px; cursor:pointer }
+.diagram-slide { padding: 8px }

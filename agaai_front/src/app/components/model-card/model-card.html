@@ -2,7 +2,7 @@
   <div class="card" [style.background]="theme.card" [style.color]="theme.text">
     <div class="header">
       <h3>{{ model.name }}</h3>
-      <span class="badge">{{ model.type }}</span>
+      <span class="badge">{{ model.badges?.join(', ') || 'No badge' }}</span>
     </div>
     <p class="desc">{{ model.description }}</p>
     <button (click)="toggleSave($event)" class="save-btn">

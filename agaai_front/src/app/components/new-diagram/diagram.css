@@ -1,0 +1,427 @@
+/* diagram.component.css */
+
+/* ── Shell layout ──────────────────────────────────────────────────────────── */
+
+.diagram-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0f0f1a;
+  color: #e0e0f0;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ── Toolbar ───────────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 52px;
+  background: #16162a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.toolbar-left  { display: flex; align-items: center; gap: 12px; flex: 1; }
+.toolbar-center { display: flex; align-items: center; gap: 6px; }
+.toolbar-right  { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: flex-end; }
+
+.brand {
+  font-size: 15px;
+  font-weight: 600;
+  color: #a78bfa;
+  letter-spacing: -0.3px;
+}
+
+.summary {
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  font-variant-numeric: tabular-nums;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 4px;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+.btn-add {
+  background: rgba(167,139,250,0.12);
+  border-color: rgba(167,139,250,0.3);
+  color: #c4b5fd;
+}
+.btn-add:hover { background: rgba(167,139,250,0.22); border-color: rgba(167,139,250,0.5); }
+
+.btn-ghost {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.09); color: #fff; }
+
+.btn-export {
+  background: rgba(99,179,237,0.1);
+  border-color: rgba(99,179,237,0.25);
+  color: #90cdf4;
+  font-size: 12px;
+  padding: 5px 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.btn-export:hover { background: rgba(99,179,237,0.2); }
+
+.btn-danger {
+  background: rgba(252,129,129,0.08);
+  border-color: rgba(252,129,129,0.2);
+  color: #fc8181;
+  padding: 6px 10px;
+}
+.btn-danger:hover { background: rgba(252,129,129,0.18); }
+
+.btn-primary {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #fff;
+  padding: 8px 20px;
+}
+.btn-primary:hover { background: #6d28d9; }
+
+/* ── Status bar ────────────────────────────────────────────────────────────── */
+
+.status-bar {
+  height: 0;
+  overflow: hidden;
+  background: rgba(167,139,250,0.15);
+  border-bottom: 1px solid rgba(167,139,250,0.2);
+  font-size: 12px;
+  color: #c4b5fd;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  transition: height 0.2s;
+}
+.status-bar.visible {
+  height: 28px;
+}
+
+/* ── Canvas ────────────────────────────────────────────────────────────────── */
+
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* JointJS paper inside */
+.canvas > svg {
+  display: block;
+}
+
+/* ── Empty state hint ──────────────────────────────────────────────────────── */
+
+.canvas-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  gap: 8px;
+}
+
+.hint-icon {
+  color: rgba(255,255,255,0.12);
+  margin-bottom: 4px;
+}
+
+.hint-text {
+  font-size: 15px;
+  color: rgba(255,255,255,0.2);
+  font-weight: 500;
+  margin: 0;
+}
+
+.hint-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.1);
+  margin: 0;
+}
+
+/* ── Modal overlay ─────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Modal ─────────────────────────────────────────────────────────────────── */
+
+.modal {
+  background: #1c1c30;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  width: 420px;
+  max-width: 94vw;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(12px);
+  transition: transform 0.2s;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+
+.modal-overlay.active .modal {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 0;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e0e0f0;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.4);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+}
+.modal-close:hover { color: rgba(255,255,255,0.8); }
+
+.modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px 18px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Fields ────────────────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4b5fd;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.field-input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #e0e0f0;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field-input:focus { border-color: rgba(167,139,250,0.5); }
+
+/* range */
+.field-range {
+  width: 100%;
+  accent-color: #7c3aed;
+  cursor: pointer;
+}
+
+.range-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: rgba(255,255,255,0.25);
+  padding: 0 2px;
+}
+
+/* ── Color swatches ────────────────────────────────────────────────────────── */
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s;
+}
+.swatch:hover { transform: scale(1.15); }
+.swatch.selected {
+  border-color: #fff;
+  transform: scale(1.15);
+}
+
+.color-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-picker {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+.color-hex {
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ── Radio group ───────────────────────────────────────────────────────────── */
+
+.radio-group {
+  display: flex;
+  gap: 6px;
+}
+
+.radio-opt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-align: center;
+}
+
+.radio-opt input[type="radio"] { display: none; }
+
+.radio-opt.active,
+.radio-opt:hover {
+  background: rgba(124,58,237,0.15);
+  border-color: rgba(124,58,237,0.4);
+  color: #c4b5fd;
+}
+
+/* ── Preview ───────────────────────────────────────────────────────────────── */
+
+.preview-box {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-shape {
+  min-width: 100px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  transition: background 0.2s, border-radius 0.2s;
+}
+
+.preview-shape.is-circle {
+  width: 70px;
+  height: 70px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: unset;
+}

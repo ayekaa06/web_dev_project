@@ -1,0 +1,31 @@
+<div class="arch-viewer">
+  <div class="controls">
+    <button class="nav" (click)="prev()" [disabled]="current===0">◀</button>
+    <div class="indicator">{{ current + 1 }} / {{ totalSlides }}</div>
+    <button class="nav" (click)="next()" [disabled]="current >= totalSlides - 1">▶</button>
+  </div>
+
+  <div class="slide" *ngIf="!isDiagramSlide()">
+    <ng-container *ngIf="currentItem() as file">
+      <img *ngIf="isImage(file)" [src]="file" alt="architecture image" />
+      <div *ngIf="!isImage(file)" class="file-card">
+        <div class="file-name">{{ file }}</div>
+        <div class="file-type">{{ file.split('.').pop() || 'file' }}</div>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="!currentItem()">
+      <div class="empty">No architecture files</div>
+    </ng-container>
+  </div>
+
+  <div class="slide diagram-slide" *ngIf="isDiagramSlide()">
+    <app-diagram></app-diagram>
+  </div>
+
+  <div class="thumbnails">
+    <button *ngFor="let _ of (architectures || []); let i = index" class="thumb" (click)="goTo(i)">
+      {{ i + 1 }}
+    </button>
+    <button class="thumb" (click)="goTo(totalSlides - 1)">Diagram</button>
+  </div>
+</div>

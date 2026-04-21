@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.conf import settings
 
-from .models import User
+from .models import User    
 
 
 class RegisterSerializer(serializers.ModelSerializer):

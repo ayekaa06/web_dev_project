@@ -1,0 +1,15 @@
+<div class="editor-card" *ngIf="model">
+  <h3>Prompts</h3>
+  <ul>
+    @for (p of model.prompts || []; track p) {
+      <li>
+        {{p}}
+        <button class="remove" (click)="remove($index)">x</button>
+      </li>
+    }
+  </ul>
+  <div class="add-row">
+    <input [(ngModel)]="newPrompt" placeholder="New prompt" />
+    <button (click)="add()" class="editor-btn">Add</button>
+  </div>
+</div>

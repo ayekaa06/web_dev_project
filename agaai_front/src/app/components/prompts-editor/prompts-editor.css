@@ -1,0 +1,7 @@
+.editor-card { margin-top: 16px; padding: 16px; border-radius: 12px; background: #0b1220; border: 1px solid #334155; }
+.editor-card h3 { color: #38bdf8; margin-bottom: 8px; }
+.editor-card ul { list-style: none; padding: 0; margin: 0 0 8px 0 }
+.editor-card li { display:flex; justify-content:space-between; gap:10px; padding:6px 0 }
+.add-row { display:flex; gap:8px; align-items:center }
+.editor-btn { padding:8px 12px; border-radius:8px; background:#38bdf8; border:none; cursor:pointer }
+.remove { background:transparent; border:none; color:#f87171; cursor:pointer }
