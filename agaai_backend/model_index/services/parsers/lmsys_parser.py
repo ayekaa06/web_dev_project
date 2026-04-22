@@ -1,18 +1,3 @@
-"""
-LMSYS / Chatbot Arena parser.
-
-Источников данных два (первый успешный используется):
-  1. HuggingFace dataset API — lmsys/chatbot-arena-leaderboard
-     datasets-server.huggingface.co (публичный, без ключа)
-  2. GitHub daily JSON snapshot — oolong-tea-2026/arena-ai-leaderboards
-
-Что возвращает:
-  arena_elo, arena_rank, votes, organization, license,
-  benchmarks: [arena_elo, mt_bench, mmlu] если есть в данных.
-
-Результаты кэшируются на 6 часов (данные обновляются раз в несколько дней).
-"""
-
 from __future__ import annotations
 
 import logging
@@ -28,17 +13,16 @@ logger = logging.getLogger(__name__)
 _DOMAIN_HF   = "huggingface.co"
 _DOMAIN_GH   = "raw.githubusercontent.com"
 
+
 _HF_DATASET_URL = (
-    "https://datasets-server.huggingface.co/rows"
-    "?dataset=lmsys%2Fchatbot-arena-leaderboard"
-    "&config=default&split=train&offset=0&length=200"
+    "https://datasets-server.huggingface.co/rows?dataset=lmarena-ai%2Fleaderboard-dataset&config=text_style_control&split=latest&offset=0&length=100"
 )
 _GITHUB_SNAPSHOT = (
     "https://raw.githubusercontent.com/oolong-tea-2026/"
     "arena-ai-leaderboards/main/data/leaderboard_latest.json"
 )
 
-# Column aliases across different snapshot versions
+
 _NAME_KEYS  = ("model", "key", "name", "model_name", "Model")
 _ELO_KEYS   = ("arena_elo_rating", "elo", "elo_rating", "arena_score",
                "rating", "Arena Elo rating")
@@ -49,8 +33,6 @@ _ORG_KEYS   = ("organization", "org", "Organization", "creator")
 
 class LMSYSParser(BaseParser):
 
-    # Full leaderboard is cached per-process (6 hours)
-    # The individual get_model_info calls also cache their result.
 
     def _load_leaderboard(self) -> Optional[list[dict]]:
         """Fetch & return all leaderboard rows.  Tries HF first, then GitHub."""
@@ -96,7 +78,6 @@ class LMSYSParser(BaseParser):
             logger.warning("Arena GitHub snapshot failed: %s", exc)
         return None
 
-    # ── Matching ──────────────────────────────────────────────────────────
 
     @staticmethod
     def _normalise(s: str) -> str:

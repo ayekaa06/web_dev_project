@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import uuid
-=======
 import uuid6
->>>>>>> feat/login_completed
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
