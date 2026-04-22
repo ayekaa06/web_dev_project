@@ -51,8 +51,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     added_timestamp = models.DateTimeField(auto_now_add=True)
-    peers = models.JSONField(default=list, blank=True)
-    social = models.JSONField(default=list, blank=True)
+    peers = models.JSONField(default=list, blank=False)
+    social = models.JSONField(default=list, blank=False)
 
     objects = CustomUserManager()
 

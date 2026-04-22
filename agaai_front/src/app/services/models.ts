@@ -16,12 +16,7 @@ export type Model = {
   benchmarks?: Benchmark[] | null;
 }
 
-
-const BASE_URL = "127.0.0.1:8000"
-
-@Injectable({ providedIn: 'root' })
-export class ModelsService {
-  private models: Model[] = [
+const MOCK_MODELS: Model[] = [
     { 
       id: 1, 
       name: 'GPT-4', 
@@ -55,6 +50,13 @@ export class ModelsService {
       benchmarks: [{ name: 'MMLU', description: 'Massive Multitask Language Understanding', value: 78 }]
     }
   ];
+
+
+const BASE_URL = "127.0.0.1:8000"
+
+@Injectable({ providedIn: 'root' })
+export class ModelsService {
+  private models: Model[] = MOCK_MODELS;
 
   getAll(): Model[] { return this.models; }
 

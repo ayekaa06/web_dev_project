@@ -15,7 +15,7 @@
       <div *ngIf="mode === 'register'" class="field">
         <label>
           Full name
-          <input type="text" name="name" [(ngModel)]="formData.name" placeholder="Your name" />
+          <input type="text" name="name" [(ngModel)]="formData.username" placeholder="Your name" />
         </label>
       </div>
 
@@ -46,7 +46,7 @@
         {{ mode === 'login' ? 'Create an account' : 'Already have an account?' }}
       </button>
 
-      <p class="error" *ngIf="message">{{ message }}</p>
+      <p class="error" *ngIf="message()">{{ message() }}</p>
     </form>
   </div>
 </div>

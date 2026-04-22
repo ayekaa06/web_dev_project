@@ -155,6 +155,7 @@ class UseCase(models.Model):
 
 class Prompt(models.Model):
     """Prompts for ML models in real-world scenarios."""
+    name = models.CharField(max_length=255, unique=True)
     prompt_template = models.TextField()
 
     class Meta:
@@ -163,3 +164,16 @@ class Prompt(models.Model):
 
     def __str__(self):
         return f"Prompt: {self.sphere} - {self.model_fullref.model_name}"
+
+
+class Badge(models.Model):
+    """Badge entities that can be assigned to MLModelRecord entries."""
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Badge"
+        verbose_name_plural = "Badges"
+
+    def __str__(self):
+        return self.name

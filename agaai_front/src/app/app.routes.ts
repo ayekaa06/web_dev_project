@@ -6,15 +6,26 @@ import { ModelPage } from './pages/model-page/model-page';
 import { Favorites } from './pages/favorites/favorites';
 import { Compare } from './pages/compare/compare';
 import { LoginPage } from './pages/login-page/login-page';
+import { AuthService } from './services/auth.service';
+import { map } from 'rxjs/internal/operators/map';
 
 const authGuard = () => {
   const router = inject(Router);
-  return localStorage.getItem('auth_token') ? true : router.parseUrl('/login');
+  const authService = inject(AuthService);
+
+  return authService.isAuhtenticated().pipe(
+    map((isValid) => isValid || router.createUrlTree(['/login']))
+  );
 };
 
 const redirectIfAuthenticated = () => {
   const router = inject(Router);
-  return localStorage.getItem('auth_token') ? router.parseUrl('/') : true;
+  const authService = inject(AuthService);
+  console.log('Checking authentication for route access...', authService.isAuhtenticated());
+
+  return authService.isAuhtenticated().pipe(
+    map((isValid) => !isValid || router.createUrlTree(['/']))
+  );
 };
 
 export const routes: Routes = [

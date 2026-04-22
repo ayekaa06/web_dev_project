@@ -19,7 +19,6 @@ export class Catalog {
   showModal = false;
   submittedModelJson = '';
   newModelForm = {
-    id: '',
     name: '',
     uniq_name: '',
     description: '',
@@ -62,7 +61,6 @@ export class Catalog {
 
   resetForm() {
     this.newModelForm = {
-      id: '',
       name: '',
       uniq_name: '',
       description: '',
