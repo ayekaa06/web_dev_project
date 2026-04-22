@@ -1,0 +1,119 @@
+.container {
+  padding: 30px;
+  min-height: 100vh;
+  font-family: system-ui;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.back {
+  color: #38bdf8;
+  text-decoration: none;
+  font-size: 14px;
+  opacity: 0.8;
+}
+.header {
+  margin-bottom: 30px;
+}
+.title-row {
+  margin-top: 16px;
+}
+.badge {
+  font-size: 12px;
+  background: #38bdf8;
+  color: #000;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+h1 {
+  font-size: 28px;
+  margin-top: 10px;
+}
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.post {
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform 0.2s;
+}
+.post:hover {
+  transform: translateY(-2px);
+}
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  flex-shrink: 0;
+}
+.post-meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.author {
+  font-weight: bold;
+  font-size: 14px;
+  color: #38bdf8;
+}
+.date {
+  font-size: 12px;
+  opacity: 0.5;
+}
+.tag {
+  font-size: 11px;
+  background: #6366f1;
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+.post-title {
+  font-size: 18px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.post-content {
+  opacity: 0.75;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.post-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.like-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: inherit;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: background 0.2s;
+}
+.like-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+.like-btn.liked {
+  color: #f43f5e;
+}

@@ -1,5 +1,5 @@
 <div *ngIf="model; else notFound" class="container" [style.background]="theme.bg" [style.color]="theme.text">
-  <a routerLink="/catalog" class="back">nazad</a>
+  <a routerLink="/catalog" class="back">← Каталог</a>
 
   <div class="hero" [style.border]="'1px solid ' + theme.border">
     <div>
@@ -21,6 +21,57 @@
     </div>
   </div>
 
+  <!-- Use Cases секция -->
+  <div class="section-block" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <div class="section-header">
+      <div>
+        <h3 class="card-title">Use Cases</h3>
+        <p style="opacity: 0.5; font-size: 14px; margin-top: 4px">{{ model.useCases.length }} историй от пользователей</p>
+      </div>
+      <a [routerLink]="['/models', model.id, 'use-cases']" class="view-all-btn">
+        Смотреть все →
+      </a>
+    </div>
+    <div class="usecase-preview">
+      @for (uc of model.useCases.slice(0, 2); track uc.id) {
+        <a [routerLink]="['/models', model.id, 'use-cases']" class="usecase-card" [style.border]="'1px solid ' + theme.border">
+          <div class="uc-top">
+            <div class="avatar-sm">{{ uc.avatar }}</div>
+            <span class="uc-author">{{ uc.author }}</span>
+            <span class="uc-tag">{{ uc.tag }}</span>
+          </div>
+          <p class="uc-title">{{ uc.title }}</p>
+          <p class="uc-likes">🤍 {{ uc.likes }}</p>
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- Reviews секция -->
+  <div class="section-block" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <h3 class="card-title">Отзывы</h3>
+    <div class="reviews">
+      @for (r of model.reviews; track r.id) {
+        <div class="review" [style.border-bottom]="'1px solid ' + theme.border">
+          <div class="review-header">
+            <div class="avatar">{{ r.avatar }}</div>
+            <div class="review-meta">
+              <span class="review-author">{{ r.author }}</span>
+              <span class="review-date">{{ r.date }}</span>
+            </div>
+            <div class="stars">
+              @for (s of [1,2,3,4,5]; track s) {
+                <span [style.opacity]="s <= r.rating ? '1' : '0.2'">★</span>
+              }
+            </div>
+          </div>
+          <p class="review-text">{{ r.text }}</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Заметки -->
   <div class="note-block" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
     <h3 class="card-title">Ваши заметки</h3>
     <textarea [(ngModel)]="note" placeholder="Напишите что-нибудь..." class="textarea"></textarea>

@@ -1,0 +1,43 @@
+<div class="container" [style.background]="theme.bg" [style.color]="theme.text">
+  @if (model) {
+    <div class="header">
+      <a [routerLink]="['/models', model.id]" class="back">← Назад к {{ model.name }}</a>
+      <div class="title-row">
+        <span class="badge">{{ model.type }}</span>
+        <h1>Use Cases — {{ model.name }}</h1>
+        <p style="opacity: 0.5; margin-top: 8px">{{ model.useCases.length }} историй от пользователей</p>
+      </div>
+    </div>
+
+    <div class="feed">
+      @for (uc of model.useCases; track uc.id) {
+        <div class="post" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+          <div class="post-header">
+            <div class="avatar">{{ uc.avatar }}</div>
+            <div class="post-meta">
+              <span class="author">{{ uc.author }}</span>
+              <span class="date">{{ uc.date }}</span>
+            </div>
+            <span class="tag">{{ uc.tag }}</span>
+          </div>
+          <h2 class="post-title">{{ uc.title }}</h2>
+          <p class="post-content">{{ uc.content }}</p>
+          <div class="post-footer">
+            <button
+              (click)="toggleLike(uc)"
+              class="like-btn"
+              [class.liked]="isLiked(uc.id)"
+            >
+              {{ isLiked(uc.id) ? '❤️' : '🤍' }} {{ uc.likes }}
+            </button>
+            <span style="opacity: 0.4; font-size: 13px">{{ uc.date }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (!model) {
+    <h2>Not found</h2>
+  }
+</div>
