@@ -34,16 +34,20 @@
       </div>
 
       <div class="field-row">
-        <label>ID</label>
-        <input type="number" [(ngModel)]="newModelForm.id" />
+        <label>Custom display name</label>
+        <input [(ngModel)]="newModelForm.custom_name" />
       </div>
       <div class="field-row">
-        <label>Name</label>
-        <input [(ngModel)]="newModelForm.name" />
+        <label>Model name (uniq)</label>
+        <input [(ngModel)]="newModelForm.model_name" />
       </div>
       <div class="field-row">
-        <label>Unique name</label>
-        <input [(ngModel)]="newModelForm.uniq_name" />
+        <label>Author</label>
+        <input [(ngModel)]="newModelForm.author" />
+      </div>
+      <div class="field-row">
+        <label>Version</label>
+        <input [(ngModel)]="newModelForm.version" />
       </div>
       <div class="field-row">
         <label>Description</label>
@@ -58,12 +62,8 @@
         <input [(ngModel)]="newModelForm.badges" />
       </div>
       <div class="field-row">
-        <label>Prompts (comma separated)</label>
-        <input [(ngModel)]="newModelForm.prompts" />
-      </div>
-      <div class="field-row">
-        <label>Architecture (comma separated)</label>
-        <input [(ngModel)]="newModelForm.architecture" />
+        <label>Prompts (JSON array)</label>
+        <textarea [(ngModel)]="newModelForm.prompts" placeholder='[ {"name":"p1","description":"...","content":"..."} ]'></textarea>
       </div>
       <div class="field-row">
         <label>Dependencies (JSON array)</label>

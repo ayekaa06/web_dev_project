@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 
 class MLModel(models.Model):
@@ -53,7 +54,18 @@ class MLModelRecord(models.Model):
 
 
 def architecture_file_upload_path(instance, filename):
-    return f"mlmodel_architectures/{instance.record.model_fullref}/{filename}"
+    # Build a safe directory name using author, model_name and version
+    try:
+        model = instance.record.model_fullref
+        base = f"{model.author}-{model.model_name}-{model.version}"
+    except Exception:
+        base = str(instance.record.id)
+
+    safe = slugify(base)
+    if not safe:
+        safe = str(instance.record.id)
+
+    return f"mlmodel_architectures/{safe}/{filename}"
 
 
 class MLArchitectureFile(models.Model):

@@ -10,4 +10,10 @@ export type Benchmark = {
   value: number;
 }
 
+export type Prompt = {
+  name: string;
+  description: string;
+  content: string;
+}
+
 export type Profiling = Benchmark | {value: string | null;}

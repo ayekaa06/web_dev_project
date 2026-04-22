@@ -4,6 +4,22 @@ import { FormsModule } from '@angular/forms';
 import { ModelsService, Model } from '../../services/models';
 import { ThemeService } from '../../services/theme';
 import { ModelCard } from '../../components/model-card/model-card';
+import { Benchmark, Dependency, Profiling, Prompt } from '../../types/ml_model';
+
+type SubmitModel = {
+  custom_name: string;
+  model_name: string;
+  author: string;
+  version: string;
+  description: string;
+  custom_note: string | null;
+  badges?: string[] | null;
+  prompts?: Prompt[] | null;
+  dependencies?: Dependency[] | null;
+  profiling?: Profiling[] | null;
+  benchmarks?: Benchmark[] | null;
+}
+
 
 @Component({
   selector: 'app-catalog',
@@ -18,17 +34,18 @@ export class Catalog {
   visible = true;
   showModal = false;
   submittedModelJson = '';
-  newModelForm = {
-    name: '',
-    uniq_name: '',
+  newModelForm: SubmitModel = {
+    custom_name: '',
+    model_name: '',
+    author: '',
+    version: '',
     description: '',
     custom_note: '',
-    badges: '',
-    prompts: '',
-    dependencies: '',
-    profiling: '',
-    architecture: '',
-    benchmarks: ''
+    badges: null,
+    prompts: null,
+    dependencies: null,
+    profiling: null,
+    benchmarks: null
   };
 
   constructor(public modelsService: ModelsService, public theme: ThemeService) {}
@@ -61,16 +78,17 @@ export class Catalog {
 
   resetForm() {
     this.newModelForm = {
-      name: '',
-      uniq_name: '',
+      custom_name: '',
+      model_name: '',
+      author: '',
+      version: '',
       description: '',
-      badges: '',
       custom_note: '',
-      prompts: '',
-      dependencies: '',
-      profiling: '',
-      architecture: '',
-      benchmarks: ''
+      badges: null,
+      prompts: null,
+      dependencies: null,
+      profiling: null,
+      benchmarks: null
     };
   }
 
@@ -92,23 +110,39 @@ export class Catalog {
   }
 
   submitModel() {
-    const model: Model = {
-      id: Number(this.newModelForm.id) || Date.now(),
-      name: this.newModelForm.name.trim(),
-      uniq_name: this.newModelForm.uniq_name.trim(),
+    // Build SubmitModel payload
+    const payload: SubmitModel = {
+      custom_name: this.newModelForm.custom_name.trim(),
+      model_name: this.newModelForm.model_name.trim(),
+      author: this.newModelForm.author.trim(),
+      version: this.newModelForm.version.trim(),
       description: this.newModelForm.description.trim(),
-      custom_note: this.newModelForm.custom_note.trim() || null,
-      badges: this.parseJsonArray(this.newModelForm.badges),
-      prompts: this.parseArray(this.newModelForm.prompts),
-      dependencies: this.parseJsonArray(this.newModelForm.dependencies),
-      profiling: this.parseJsonArray(this.newModelForm.profiling),
-      architecture: this.parseArray(this.newModelForm.architecture),
-      benchmarks: this.parseJsonArray(this.newModelForm.benchmarks)
+      custom_note: (this.newModelForm.custom_note || '').trim() || null,
+      badges: this.parseArray((this.newModelForm.badges as any) || '') ,
+      prompts: this.parseJsonArray<Prompt>((this.newModelForm.prompts as any) || '') ,
+      dependencies: this.parseJsonArray<Dependency>((this.newModelForm.dependencies as any) || ''),
+      profiling: this.parseJsonArray<Profiling>((this.newModelForm.profiling as any) || ''),
+      benchmarks: this.parseJsonArray<Benchmark>((this.newModelForm.benchmarks as any) || '')
     };
 
-    console.log('New model submitted', model);
-    this.submittedModelJson = JSON.stringify(model, null, 2);
-    this.modelsService.addModel(model);
+    console.log('SubmitModel payload', payload);
+    this.submittedModelJson = JSON.stringify(payload, null, 2);
+
+    const localModel: Model = {
+      id: Date.now(),
+      name: payload.custom_name || payload.model_name,
+      uniq_name: payload.model_name,
+      description: payload.description || '',
+      custom_note: payload.custom_note || null,
+      badges: payload.badges,
+      prompts: payload.prompts ? payload.prompts.map(p => p.content || p.name) : null,
+      dependencies: payload.dependencies || null,
+      profiling: payload.profiling || null,
+      architecture: null,
+      benchmarks: payload.benchmarks || null
+    };
+
+    this.modelsService.addModel(localModel);
     this.closeModal();
   }
 }

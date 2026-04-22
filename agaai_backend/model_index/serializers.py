@@ -30,18 +30,7 @@ class BenchmarkSerializer(serializers.ModelSerializer):
 
 class MLModelRecordSerializer(serializers.ModelSerializer):
     architecture = MLArchitectureFileSerializer(many=True, read_only=True)
-    new_architecture_files = serializers.ListField(
-        child=serializers.FileField(),
-        write_only=True,
-        required=False,
-        allow_empty=True,
-    )
-    new_architecture_descriptions = serializers.ListField(
-        child=serializers.CharField(),
-        write_only=True,
-        required=False,
-        allow_empty=True,
-    )
+    # architecture files are uploaded via a separate endpoint
     # Accept structured input for benchmarks and prompts; create missing objects by name/template
     benchmarks_input = serializers.ListField(child=serializers.DictField(), write_only=True, required=False)
     prompts_input = serializers.ListField(child=serializers.DictField(), write_only=True, required=False)
@@ -63,8 +52,6 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
             'prompts',
             'prompts_input',
             'architecture',
-            'new_architecture_files',
-            'new_architecture_descriptions',
         ]
         extra_kwargs = {
             'benchmarks': {'required': False},
@@ -72,17 +59,10 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        files = attrs.get('new_architecture_files', [])
-        descriptions = attrs.get('new_architecture_descriptions', [])
-        if descriptions and len(descriptions) != len(files):
-            raise serializers.ValidationError(
-                'new_architecture_descriptions length must match new_architecture_files length.'
-            )
+        # architecture upload validation moved to upload endpoint
         return attrs
 
     def create(self, validated_data):
-        files = validated_data.pop('new_architecture_files', [])
-        descriptions = validated_data.pop('new_architecture_descriptions', [])
         benchmarks_input = validated_data.pop('benchmarks_input', None)
         prompts_input = validated_data.pop('prompts_input', None)
 
@@ -94,12 +74,9 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
         if prompts_input is not None:
             self._apply_prompts_input(record, prompts_input)
 
-        self._create_architecture_files(record, files, descriptions)
         return record
 
     def update(self, instance, validated_data):
-        files = validated_data.pop('new_architecture_files', [])
-        descriptions = validated_data.pop('new_architecture_descriptions', [])
         benchmarks_input = validated_data.pop('benchmarks_input', None)
         prompts_input = validated_data.pop('prompts_input', None)
 
@@ -116,7 +93,6 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
             instance.prompts.clear()
             self._apply_prompts_input(instance, prompts_input)
 
-        self._create_architecture_files(instance, files, descriptions)
         return instance
 
     def _apply_prompts_input(self, record, prompts_input):
@@ -168,14 +144,7 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
             # add via through model with value
             record.benchmarks.add(benchmark_obj, through_defaults={'value': value_num})
 
-    def _create_architecture_files(self, record, files, descriptions):
-        for idx, uploaded_file in enumerate(files):
-            description = descriptions[idx] if idx < len(descriptions) else ''
-            MLArchitectureFile.objects.create(
-                record=record,
-                file=uploaded_file,
-                description=description,
-            )
+    # architecture files are created via the separate UploadArchitectureView
 
 
 class BadgeSerializer(serializers.ModelSerializer):

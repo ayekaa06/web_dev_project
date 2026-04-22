@@ -2,11 +2,13 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.parsers import FileUploadParser
+from rest_framework.views import APIView
 
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import MLModelRecordFilter
 
-from .models import MLModelRecord, MLModel, Benchmark, Prompt, Badge
+from .models import MLArchitectureFile, MLModelRecord, MLModel, Benchmark, Prompt, Badge
 from .serializers import (
     MLModelRecordSerializer,
     BenchmarkSerializer,
@@ -37,55 +39,94 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
     def add_benchmark(self, request, pk=None):
         record = self.get_object()
         benchmark_id = request.data.get('benchmark_id')
+        benchmark_name = request.data.get('benchmark_name') or request.data.get('name')
         value = request.data.get('value')
-        if not benchmark_id or value is None:
-            return Response({'error': 'benchmark_id and value are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if value is None:
+            return Response({'error': 'value is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        benchmark = None
+        if benchmark_id:
+            try:
+                benchmark = Benchmark.objects.get(id=benchmark_id)
+            except Benchmark.DoesNotExist:
+                return Response({'error': 'Benchmark not found by id'}, status=status.HTTP_404_NOT_FOUND)
+        elif benchmark_name:
+            benchmark, _ = Benchmark.objects.get_or_create(
+                name=benchmark_name,
+                defaults={'description': request.data.get('description', ''), 'source': request.data.get('source', ''), 'formula': request.data.get('formula', '')}
+            )
+        else:
+            return Response({'error': 'benchmark_id or benchmark_name is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ensure numeric value
         try:
-            benchmark = Benchmark.objects.get(id=benchmark_id)
-        except Benchmark.DoesNotExist:
-            return Response({'error': 'Benchmark not found'}, status=status.HTTP_404_NOT_FOUND)
-        record.benchmarks.add(benchmark, through_defaults={'value': value})
-        return Response({'message': 'Benchmark added successfully'})
+            value_num = float(value)
+        except Exception:
+            return Response({'error': 'value must be numeric'}, status=status.HTTP_400_BAD_REQUEST)
+
+        record.benchmarks.add(benchmark, through_defaults={'value': value_num})
+        return Response({'message': 'Benchmark added successfully', 'benchmark': benchmark.name, 'value': value_num})
 
     @action(detail=True, methods=['post'], url_path='remove-benchmark')
     def remove_benchmark(self, request, pk=None):
         record = self.get_object()
         benchmark_id = request.data.get('benchmark_id')
-        if not benchmark_id:
-            return Response({'error': 'benchmark_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        benchmark_name = request.data.get('benchmark_name') or request.data.get('name')
+
+        if not benchmark_id and not benchmark_name:
+            return Response({'error': 'benchmark_id or benchmark_name is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            benchmark = Benchmark.objects.get(id=benchmark_id)
+            if benchmark_id:
+                benchmark = Benchmark.objects.get(id=benchmark_id)
+            else:
+                benchmark = Benchmark.objects.get(name=benchmark_name)
         except Benchmark.DoesNotExist:
             return Response({'error': 'Benchmark not found'}, status=status.HTTP_404_NOT_FOUND)
+
         record.benchmarks.remove(benchmark)
-        return Response({'message': 'Benchmark removed successfully'})
+        return Response({'message': 'Benchmark removed successfully', 'benchmark': benchmark.name})
 
     @action(detail=True, methods=['post'], url_path='add-prompt')
     def add_prompt(self, request, pk=None):
         record = self.get_object()
-        prompt_name = request.data.get('prompt_name')
         prompt_id = request.data.get('prompt_id')
-        if not prompt_id and not prompt_name:
-            return Response({'error': 'prompt_id or prompt_name is required'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            prompt = Prompt.objects.get(id=prompt_id)
-        except Prompt.DoesNotExist:
-            return Response({'error': 'Prompt not found'}, status=status.HTTP_404_NOT_FOUND)
+        prompt_template = request.data.get('prompt_template') or request.data.get('prompt') or request.data.get('content') or request.data.get('name')
+
+        if not prompt_id and not prompt_template:
+            return Response({'error': 'prompt_id or prompt_template is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if prompt_id:
+            try:
+                prompt = Prompt.objects.get(id=prompt_id)
+            except Prompt.DoesNotExist:
+                return Response({'error': 'Prompt not found by id'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            prompt, _ = Prompt.objects.get_or_create(prompt_template=prompt_template)
+
         record.prompts.add(prompt)
-        return Response({'message': 'Prompt added successfully'})
+        return Response({'message': 'Prompt added successfully', 'prompt': prompt.prompt_template})
 
     @action(detail=True, methods=['post'], url_path='remove-prompt')
     def remove_prompt(self, request, pk=None):
         record = self.get_object()
         prompt_id = request.data.get('prompt_id')
-        if not prompt_id:
-            return Response({'error': 'prompt_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        prompt_template = request.data.get('prompt_template') or request.data.get('prompt') or request.data.get('content') or request.data.get('name')
+
+        if not prompt_id and not prompt_template:
+            return Response({'error': 'prompt_id or prompt_template is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            prompt = Prompt.objects.get(id=prompt_id)
+            if prompt_id:
+                prompt = Prompt.objects.get(id=prompt_id)
+            else:
+                prompt = Prompt.objects.get(prompt_template=prompt_template)
         except Prompt.DoesNotExist:
             return Response({'error': 'Prompt not found'}, status=status.HTTP_404_NOT_FOUND)
+
         record.prompts.remove(prompt)
-        return Response({'message': 'Prompt removed successfully'})
+        return Response({'message': 'Prompt removed successfully', 'prompt': prompt.prompt_template})
 
     @action(detail=True, methods=['post'], url_path='add-badge')
     def add_badge(self, request, pk=None):
@@ -229,3 +270,34 @@ class BadgeViewSet(viewsets.ModelViewSet):
     queryset = Badge.objects.all()
     serializer_class = BadgeSerializer
     permission_classes = [IsAuthenticated]
+
+
+class RawUploadView(APIView):
+    """Single-file raw upload for architecture files.
+
+    PUT /.../upload-architecture/{record_id}/{filename}/
+    - `record_id` taken from path
+    - `filename` taken from path and optional used as description
+    - authenticated user must own the record
+    - body should contain the file (FileUploadParser expects raw file in `file` key)
+    """
+    parser_classes = [FileUploadParser]
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, record_id, filename, format=None):
+        uploaded_file = request.data.get('file')
+        if not uploaded_file:
+            return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            record = MLModelRecord.objects.get(id=record_id)
+        except MLModelRecord.DoesNotExist:
+            return Response({'error': 'MLModelRecord not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not getattr(request, 'user', None) or not request.user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        if getattr(record.user_id, 'id', None) != getattr(request.user, 'id', None):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        af = MLArchitectureFile.objects.create(record=record, file=uploaded_file, description=filename)
+        return Response({'id': af.id, 'file': af.file.name}, status=status.HTTP_201_CREATED)
