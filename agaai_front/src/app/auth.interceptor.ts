@@ -12,8 +12,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   const isLoginRequest = req.url.includes('/auth/');
+  const isVerifyRequest = req.url === '/auth/token/verify/';
 
-  if (!token || isLoginRequest) {
+  if (!token || (isLoginRequest && isVerifyRequest)) {
     return next(req);
   }
 

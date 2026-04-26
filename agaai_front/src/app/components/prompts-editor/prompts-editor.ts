@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Model } from '../../services/models';
 import { showToast } from '../toast/toast';
 import { CommonModule } from '@angular/common';
+import { Prompt } from '../../types/ml_model';
 
 @Component({
   selector: 'app-prompts-editor',
@@ -14,12 +15,12 @@ export class PromptsEditor {
   @Input() model!: Model | null;
   @Output() saved = new EventEmitter<{ property: string; value: any }>();
 
-  newPrompt = '';
+  newPrompt: Prompt = { name: '', prompt_template: '' };
 
   add() {
-    if (!this.model || !this.newPrompt.trim()) return;
-    const newPrompts = [...(this.model.prompts || []), this.newPrompt.trim()];
-    this.newPrompt = '';
+    if (!this.model || !this.newPrompt.prompt_template.trim()) return;
+    const newPrompts = [...(this.model.prompts || []), { ...this.newPrompt }];
+    this.newPrompt = { name: '', prompt_template: '' };
     showToast('Prompt added');
     this.saved.emit({ property: 'prompts', value: newPrompts });
   }

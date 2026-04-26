@@ -4,14 +4,14 @@
   <p style="opacity: 0.5">Выберите до 3 моделей</p>
 
   <div class="chips">
-    @for (m of models; track m.id) {
+    @for (m of models; track m.model_fullref) {
       <button
         (click)="toggle(m)"
         [style.background]="isSelected(m) ? '#38bdf8' : theme.input"
         [style.color]="isSelected(m) ? '#000' : theme.text"
         [style.opacity]="!isSelected(m) && selected.length === 3 ? '0.4' : '1'"
         class="chip"
-      >{{ isSelected(m) ? '✓ ' : '' }}{{ m.name }}</button>
+      >{{ isSelected(m) ? '✓ ' : '' }}{{ m.custom_name }}</button>
     }
   </div>
 
@@ -21,8 +21,8 @@
         <thead>
           <tr>
             <th class="th">Параметр</th>
-            @for (m of selected; track m.id) {
-              <th class="th">{{ m.name }}</th>
+            @for (m of selected; track m.model_fullref) {
+              <th class="th">{{ m.custom_name }}</th>
             }
           </tr>
         </thead>
@@ -30,7 +30,7 @@
           @for (f of fields; track f.key) {
             <tr>
               <td class="td-label">{{ f.label }}</td>
-              @for (m of selected; track m.id) {
+              @for (m of selected; track m.model_fullref) {
                 <td class="td">{{ getValue(m, f.key) }}</td>
               }
             </tr>

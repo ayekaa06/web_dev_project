@@ -7,7 +7,7 @@ import { DiagramComponent } from '../new-diagram/diagram.component';
   selector: 'app-architecture-viewer',
   imports: [CommonModule, DiagramComponent],
   templateUrl: './architecture-viewer.html',
-  styleUrl: './architecture-viewer.css'
+  styleUrl: './architecture-viewer.css',
 })
 export class ArchitectureViewer {
   @Input() architectures: string[] | null | undefined = null;

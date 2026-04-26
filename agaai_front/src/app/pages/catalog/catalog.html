@@ -17,17 +17,23 @@
 
   <div class="filters">
     @for (f of filters; track f) {
-      <button
-        (click)="setFilter(f)"
-        [style.background]="filter === f ? '#38bdf8' : theme.input"
-        [style.color]="filter === f ? '#000' : theme.text"
-        class="filter-btn"
-      >{{ f }}</button>
+    <button
+      (click)="setFilter(f)"
+      [style.background]="filter === f ? '#38bdf8' : theme.input"
+      [style.color]="filter === f ? '#000' : theme.text"
+      class="filter-btn"
+    >
+      {{ f }}
+    </button>
     }
   </div>
 
   <div *ngIf="showModal" class="modal-overlay">
-    <div class="modal-card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <div
+      class="modal-card"
+      [style.background]="theme.block"
+      [style.border]="'1px solid ' + theme.border"
+    >
       <div class="modal-header">
         <h2>Добавить новую модель</h2>
         <button class="close-btn" (click)="closeModal()">×</button>
@@ -62,20 +68,45 @@
         <input [(ngModel)]="newModelForm.badges" />
       </div>
       <div class="field-row">
-        <label>Prompts (JSON array)</label>
-        <textarea [(ngModel)]="newModelForm.prompts" placeholder='[ {"name":"p1","description":"...","content":"..."} ]'></textarea>
+        <label>Prompts</label>
+        <div *ngFor="let p of newModelForm.prompts; let i = index" class="array-item">
+          <input [(ngModel)]="p.name" placeholder="Name" />
+          <textarea [(ngModel)]="p.prompt_template" placeholder="Prompt template"></textarea>
+          <button class="remove-btn" (click)="removePrompt(p)">Remove</button>
+        </div>
+        <button class="add-btn" (click)="addPrompt()">+ Add prompt</button>
       </div>
+
       <div class="field-row">
-        <label>Dependencies (JSON array)</label>
-        <textarea [(ngModel)]="newModelForm.dependencies" placeholder='[ {"name":"torch","requirement":">=2.0"} ]'></textarea>
+        <label>Dependencies</label>
+        <div *ngFor="let d of newModelForm.dependencies; let i = index" class="array-item">
+          <input [(ngModel)]="d.name" placeholder="Dependency name" />
+          <input [(ngModel)]="d.requirement" placeholder="Requirement (e.g. >=2.0)" />
+          <button class="remove-btn" (click)="removeDependency(d)">Remove</button>
+        </div>
+        <button class="add-btn" (click)="addDependency()">+ Add dependency</button>
       </div>
+
       <div class="field-row">
-        <label>Benchmarks (JSON array)</label>
-        <textarea [(ngModel)]="newModelForm.benchmarks" placeholder='[ {"name":"MMLU","description":"...","value":75} ]'></textarea>
+        <label>Benchmarks</label>
+        <div *ngFor="let b of newModelForm.benchmarks; let i = index" class="array-item">
+          <input [(ngModel)]="b.name" placeholder="Benchmark name" />
+          <input [(ngModel)]="b.description" placeholder="Description" />
+          <input type="number" [(ngModel)]="b.value" placeholder="Value" />
+          <button class="remove-btn" (click)="removeBenchmark(b)">Remove</button>
+        </div>
+        <button class="add-btn" (click)="addBenchmark()">+ Add benchmark</button>
       </div>
+
       <div class="field-row">
-        <label>Profiling (JSON array)</label>
-        <textarea [(ngModel)]="newModelForm.profiling" placeholder='[ {"name":"Speed","description":"...","value":90} ]'></textarea>
+        <label>Profiling</label>
+        <div *ngFor="let p of newModelForm.profiling; let i = index" class="array-item">
+          <input [(ngModel)]="p.name" placeholder="Profiling name" />
+          <input [(ngModel)]="p.description" placeholder="Description" />
+          <input [(ngModel)]="p.value" placeholder="Value" />
+          <button class="remove-btn" (click)="removeProfiling(p)">Remove</button>
+        </div>
+        <button class="add-btn" (click)="addProfiling()">+ Add profiling</button>
       </div>
 
       <div class="modal-actions">
@@ -85,14 +116,18 @@
     </div>
   </div>
 
-  <div class="grid" [style.opacity]="visible ? 1 : 0" [style.transform]="visible ? 'translateY(0)' : 'translateY(10px)'">
-    @for (m of filtered; track m.id) {
-      <app-model-card [model]="m" />
+  <div
+    class="grid"
+    [style.opacity]="visible ? 1 : 0"
+    [style.transform]="visible ? 'translateY(0)' : 'translateY(10px)'"
+  >
+    @for (m of filtered(); track m.record_id) {
+    <app-model-card [model]="m" />
     }
   </div>
 
   @if (filtered.length === 0 && visible) {
-    <p class="empty">Ничего не найдено</p>
+  <p class="empty">Ничего не найдено</p>
   }
 
   <!-- <div *ngIf="submittedModelJson" class="submitted-json" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">

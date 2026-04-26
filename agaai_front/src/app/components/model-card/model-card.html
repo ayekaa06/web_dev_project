@@ -1,12 +1,9 @@
-<a [routerLink]="['/models', model.id]" class="card-link">
+<a [routerLink]="['/models', model.record_id]" class="card-link">
   <div class="card" [style.background]="theme.card" [style.color]="theme.text">
     <div class="header">
-      <h3>{{ model.name }}</h3>
+      <h3>{{ model.custom_name }}</h3>
       <span class="badge">{{ model.badges?.join(', ') || 'No badge' }}</span>
     </div>
     <p class="desc">{{ model.description }}</p>
-    <button (click)="toggleSave($event)" class="save-btn">
-      {{ saved ? '❤️' : '🤍' }}
-    </button>
   </div>
 </a>

@@ -1,15 +1,17 @@
 <div class="editor-card" *ngIf="model">
   <h3>Prompts</h3>
   <ul>
-    @for (p of model.prompts || []; track p) {
-      <li>
-        {{p}}
+    @for (p of model.prompts || []; track p.name) {
+      <li class="prompt-item">
+        <strong>{{ p.name || 'Unnamed' }}</strong>
+        <div class="prompt-content">{{ p.prompt_template }}</div>
         <button class="remove" (click)="remove($index)">x</button>
       </li>
     }
   </ul>
   <div class="add-row">
-    <input [(ngModel)]="newPrompt" placeholder="New prompt" />
+    <input [(ngModel)]="newPrompt.name" placeholder="Prompt name (optional)" />
+    <textarea [(ngModel)]="newPrompt.prompt_template" placeholder="Prompt template"></textarea>
     <button (click)="add()" class="editor-btn">Add</button>
   </div>
 </div>

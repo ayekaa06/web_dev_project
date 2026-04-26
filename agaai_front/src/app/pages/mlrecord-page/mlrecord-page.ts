@@ -1,17 +1,20 @@
-import { Component, computed, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ModelsService } from '../../services/models';
 import { Model } from '../../services/models';
 import { ThemeService } from '../../services/theme';
-import { showToast } from '../../components/toast/toast';
 import { CustomNoteEditor } from '../../components/custom-note-editor/custom-note-editor';
 import { ArchitectureViewer } from '../../components/architecture-viewer/architecture-viewer';
 import { ProfilingEditor } from '../../components/profiling-editor/profiling-editor';
 import { BenchmarkEditor } from '../../components/benchmark-editor/benchmark-editor';
 import { PromptsEditor } from '../../components/prompts-editor/prompts-editor';
 import { BadgesEditor } from '../../components/badges-editor/badges-editor';
+import { inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { switchMap, filter } from 'rxjs';
+import { ModelApiService } from '../../services/model.service';
+import { badgeNames, modelVersionLabel } from '../../types/model-record';
 
 type MissingAttribute = {
   key: string;
@@ -20,7 +23,7 @@ type MissingAttribute = {
 };
 
 @Component({
-  selector: 'app-model-page',
+  selector: 'app-mlrecord-page',
   imports: [
     CommonModule,
     RouterLink,
@@ -32,12 +35,19 @@ type MissingAttribute = {
     PromptsEditor,
     BadgesEditor,
   ],
-  templateUrl: './model-page.html',
-  styleUrl: './model-page.css',
+  templateUrl: './mlrecord-page.html',
+  styleUrl: './mlrecord-page.css',
 })
-export class ModelPage implements OnInit {
-  model = signal<Model | null>(null);
+export class MLRecordPage implements OnInit {
+  private destroyRef = inject(DestroyRef);
+
+  route = inject(ActivatedRoute);
+  private modelId = Number(this.route.snapshot.paramMap.get('id'));
+  modelApi = inject(ModelApiService);
+
+  model = toSignal(this.modelApi.getById(this.modelId)!.pipe(filter((m) => m !== null)));
   note = '';
+
   missingAttributes = computed<MissingAttribute[]>(() => {
     const model = this.model();
     if (!model) return [];
@@ -97,16 +107,20 @@ export class ModelPage implements OnInit {
   });
   showEditor = signal<Record<string, boolean>>({});
 
-  constructor(
-    private route: ActivatedRoute,
-    private modelsService: ModelsService,
-    public theme: ThemeService,
-  ) {}
+  constructor(public theme: ThemeService) {}
+
+  badgeLabel(model: Model): string {
+    return badgeNames(model.badges).join(', ') || 'No badge';
+  }
+
+  versionLabel(model: Model): string {
+    return modelVersionLabel(model);
+  }
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.model.set(this.modelsService.getById(id) || null);
-    this.note = localStorage.getItem('note_' + id) || '';
+    // this.model.set(this.modelsService.getById(id) || null);
+    // this.note = localStorage.getItem('note_' + id) || '';
   }
 
   addAttribute(key: string) {

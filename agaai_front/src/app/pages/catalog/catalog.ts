@@ -1,39 +1,37 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ModelsService, Model } from '../../services/models';
 import { ThemeService } from '../../services/theme';
 import { ModelCard } from '../../components/model-card/model-card';
 import { Benchmark, Dependency, Profiling, Prompt } from '../../types/ml_model';
-
-type SubmitModel = {
-  custom_name: string;
-  model_name: string;
-  author: string;
-  version: string;
-  description: string;
-  custom_note: string | null;
-  badges?: string[] | null;
-  prompts?: Prompt[] | null;
-  dependencies?: Dependency[] | null;
-  profiling?: Profiling[] | null;
-  benchmarks?: Benchmark[] | null;
-}
-
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ModelApiService, SubmitModel } from '../../services/model.service';
+import { Subject } from 'rxjs/internal/Subject';
+import { switchMap } from 'rxjs/internal/operators/switchMap';
+import { startWith } from 'rxjs/internal/operators/startWith';
 
 @Component({
   selector: 'app-catalog',
   imports: [CommonModule, FormsModule, ModelCard],
   templateUrl: './catalog.html',
-  styleUrl: './catalog.css'
+  styleUrl: './catalog.css',
 })
 export class Catalog {
   search = '';
+  refresh$ = new Subject<void>();
+  modelService = inject(ModelApiService);
+  models = toSignal(
+    this.refresh$.pipe(
+      startWith(null), // load immediately on init
+      switchMap(() => this.modelService.getAllModels()),
+    ),
+    { initialValue: [] },
+  );
   filter = 'All';
   filters = ['All', 'LLM', 'Open-source', 'Fast'];
   visible = true;
   showModal = false;
-  submittedModelJson = '';
   newModelForm: SubmitModel = {
     custom_name: '',
     model_name: '',
@@ -42,29 +40,48 @@ export class Catalog {
     description: '',
     custom_note: '',
     badges: null,
-    prompts: null,
-    dependencies: null,
-    profiling: null,
-    benchmarks: null
+    prompts: [],
+    dependencies: [],
+    profiling: [],
+    benchmarks: [],
   };
+  submittedModelJson = '';
 
-  constructor(public modelsService: ModelsService, public theme: ThemeService) {}
+  constructor(
+    public modelsService: ModelsService,
+    public theme: ThemeService,
+  ) {}
 
-  get filtered(): Model[] {
-    return this.modelsService.getAll().filter(m =>
-      m.name.toLowerCase().includes(this.search.toLowerCase()) &&
-      (this.filter === 'All' || m.badges?.includes(this.filter))
+  // get filtered(): Model[] {
+  //   console.log(this.models())
+  //   return this.modelsService.getAll().filter(m =>
+  //     m.name.toLowerCase().includes(this.search.toLowerCase()) &&
+  //     (this.filter === 'All' || m.badges?.includes(this.filter))
+  //   );
+  // }
+
+  filtered = computed(() => {
+    if (!this.models()) return [];
+    return this.models()!.filter(
+      (m) =>
+        m.custom_name.toLowerCase().includes(this.search.toLowerCase()) &&
+        (this.filter === 'All' || m.badges?.map((m) => m.name).includes(this.filter)),
     );
-  }
+  });
 
   setFilter(f: string) {
     this.visible = false;
-    setTimeout(() => { this.filter = f; this.visible = true; }, 200);
+    setTimeout(() => {
+      this.filter = f;
+      this.visible = true;
+    }, 200);
   }
 
   onSearch() {
     this.visible = false;
-    setTimeout(() => { this.visible = true; }, 150);
+    setTimeout(() => {
+      this.visible = true;
+    }, 150);
   }
 
   openModal() {
@@ -85,19 +102,19 @@ export class Catalog {
       description: '',
       custom_note: '',
       badges: null,
-      prompts: null,
-      dependencies: null,
-      profiling: null,
-      benchmarks: null
+      prompts: [],
+      dependencies: [],
+      profiling: [],
+      benchmarks: [],
     };
   }
 
   parseArray(value: string): string[] | null {
     const result = value
       .split(',')
-      .map(item => item.trim())
+      .map((item) => item.trim())
       .filter(Boolean);
-    return result.length ? result : null;
+    return result.length ? result : [];
   }
 
   parseJsonArray<T>(value: string): T[] | null {
@@ -109,6 +126,51 @@ export class Catalog {
     }
   }
 
+  // helpers for dynamic lists in the form
+  addPrompt() {
+    if (!this.newModelForm.prompts) this.newModelForm.prompts = [];
+    this.newModelForm.prompts.push({ name: '', prompt_template: '' });
+  }
+
+  removePrompt(item: Prompt) {
+    if (!this.newModelForm.prompts) return;
+    const idx = this.newModelForm.prompts.indexOf(item);
+    if (idx >= 0) this.newModelForm.prompts.splice(idx, 1);
+  }
+
+  addDependency() {
+    if (!this.newModelForm.dependencies) this.newModelForm.dependencies = [];
+    this.newModelForm.dependencies.push({ name: '', requirement: '' });
+  }
+
+  removeDependency(item: Dependency) {
+    if (!this.newModelForm.dependencies) return;
+    const idx = this.newModelForm.dependencies.indexOf(item);
+    if (idx >= 0) this.newModelForm.dependencies.splice(idx, 1);
+  }
+
+  addBenchmark() {
+    if (!this.newModelForm.benchmarks) this.newModelForm.benchmarks = [];
+    this.newModelForm.benchmarks.push({ name: '', description: '', value: 0 });
+  }
+
+  removeBenchmark(item: Benchmark) {
+    if (!this.newModelForm.benchmarks) return;
+    const idx = this.newModelForm.benchmarks.indexOf(item);
+    if (idx >= 0) this.newModelForm.benchmarks.splice(idx, 1);
+  }
+
+  addProfiling() {
+    if (!this.newModelForm.profiling) this.newModelForm.profiling = [];
+    this.newModelForm.profiling.push({ name: '', description: '', value: 0 } as any);
+  }
+
+  removeProfiling(item: Profiling) {
+    if (!this.newModelForm.profiling) return;
+    const idx = this.newModelForm.profiling.indexOf(item);
+    if (idx >= 0) this.newModelForm.profiling.splice(idx, 1);
+  }
+
   submitModel() {
     // Build SubmitModel payload
     const payload: SubmitModel = {
@@ -118,31 +180,48 @@ export class Catalog {
       version: this.newModelForm.version.trim(),
       description: this.newModelForm.description.trim(),
       custom_note: (this.newModelForm.custom_note || '').trim() || null,
-      badges: this.parseArray((this.newModelForm.badges as any) || '') ,
-      prompts: this.parseJsonArray<Prompt>((this.newModelForm.prompts as any) || '') ,
-      dependencies: this.parseJsonArray<Dependency>((this.newModelForm.dependencies as any) || ''),
-      profiling: this.parseJsonArray<Profiling>((this.newModelForm.profiling as any) || ''),
-      benchmarks: this.parseJsonArray<Benchmark>((this.newModelForm.benchmarks as any) || '')
+      badges: this.parseArray((this.newModelForm.badges as any) || '') || [],
+      prompts:
+        this.newModelForm.prompts && this.newModelForm.prompts.length
+          ? this.newModelForm.prompts
+          : null,
+      dependencies:
+        this.newModelForm.dependencies && this.newModelForm.dependencies.length
+          ? this.newModelForm.dependencies
+          : [],
+      profiling:
+        this.newModelForm.profiling && this.newModelForm.profiling.length
+          ? this.newModelForm.profiling
+          : [],
+      benchmarks:
+        this.newModelForm.benchmarks && this.newModelForm.benchmarks.length
+          ? this.newModelForm.benchmarks
+          : null,
     };
-
+    this.modelService.addModelRecord(payload).subscribe({
+      next: () => {
+        this.refresh$.next(); // ← triggers new getAllModels() call, signal updates automatically
+        this.closeModal();
+      },
+    });
     console.log('SubmitModel payload', payload);
-    this.submittedModelJson = JSON.stringify(payload, null, 2);
+    // this.submittedModelJson = JSON.stringify(payload, null, 2);
 
-    const localModel: Model = {
-      id: Date.now(),
-      name: payload.custom_name || payload.model_name,
-      uniq_name: payload.model_name,
-      description: payload.description || '',
-      custom_note: payload.custom_note || null,
-      badges: payload.badges,
-      prompts: payload.prompts ? payload.prompts.map(p => p.content || p.name) : null,
-      dependencies: payload.dependencies || null,
-      profiling: payload.profiling || null,
-      architecture: null,
-      benchmarks: payload.benchmarks || null
-    };
-
-    this.modelsService.addModel(localModel);
+    // const localModel: Model = {
+    //   id: Date.now(),
+    //   name: payload.custom_name || payload.model_name,
+    //   uniq_name: payload.model_name,
+    //   description: payload.description || '',
+    //   custom_note: payload.custom_note || null,
+    //   badges: payload.badges,
+    //   prompts: payload.prompts ? payload.prompts.map(p => p.content || p.name) : null,
+    //   dependencies: payload.dependencies || null,
+    //   profiling: payload.profiling || null,
+    //   architecture: null,
+    //   benchmarks: payload.benchmarks || null
+    // };
+    // this.models = toSignal(this.modelService.getAllModels(), { initialValue: [] });
+    // this.modelsService.addModel(localModel);
     this.closeModal();
   }
 }

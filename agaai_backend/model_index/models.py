@@ -10,6 +10,7 @@ class MLModel(models.Model):
     version = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
     is_quantized = models.BooleanField(default=False)
+    param_count = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         verbose_name = "Model"
@@ -36,7 +37,8 @@ class MLModelRecord(models.Model):
         related_name="records"
     )
     custom_name = models.CharField(max_length=100)
-    badges = models.JSONField(default=list, blank=True)
+    # badges = models.JSONField(default=list, blank=True)
+    badges = models.ManyToManyField("Badge", related_name="model_records", blank=True)
     custom_note = models.TextField(null=True, blank=True)
     description = models.TextField(blank=False, default="")
     dependencies = models.JSONField(default=dict, blank=True)
@@ -48,6 +50,12 @@ class MLModelRecord(models.Model):
     class Meta:
         verbose_name = "MLModel Record"
         verbose_name_plural = "MLModel Records"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user_id", "model_fullref"],
+                name="unique_user_model_record"
+            )
+        ]
 
     def __str__(self):
         return f"Record {self.record_id} - {self.model_fullref}"
@@ -152,7 +160,7 @@ class UseCase(models.Model):
     )
     sphere = models.CharField(max_length=255)
     tags = models.JSONField(default=list, blank=True)
-    is_raw = models.BooleanField(default=False)
+    is_model_modified = models.BooleanField(default=False)
     description = models.TextField()
     datasets = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

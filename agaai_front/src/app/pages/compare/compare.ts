@@ -24,12 +24,12 @@ export class Compare {
   get models() { return this.modelsService.getAll(); }
 
   isSelected(model: Model): boolean {
-    return !!this.selected.find(m => m.id === model.id);
+    return !!this.selected.find(m => m.model_fullref === model.model_fullref);
   }
 
   toggle(model: Model) {
     if (this.isSelected(model)) {
-      this.selected = this.selected.filter(m => m.id !== model.id);
+      this.selected = this.selected.filter(m => m.model_fullref !== model.model_fullref);
     } else if (this.selected.length < 3) {
       this.selected = [...this.selected, model];
     }

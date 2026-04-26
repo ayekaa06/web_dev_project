@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Model } from '../../services/models';
 import { showToast } from '../toast/toast';
 import { CommonModule } from '@angular/common';
+import { badgeName } from '../../types/model-record';
 
 @Component({
   selector: 'app-badges-editor',
@@ -18,7 +19,7 @@ export class BadgesEditor {
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.model) {
-      this.badge = (this.model.badges && this.model.badges.length) ? this.model.badges[0] : '';
+      this.badge = this.model.badges && this.model.badges.length ? badgeName(this.model.badges[0]) : '';
     }
   }
 

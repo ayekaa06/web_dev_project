@@ -36,10 +36,11 @@ export class AuthService {
   readonly tokenKey = 'access_token';
   readonly refreshTokenKey = 'refresh_token';
 
-  login(payload: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(environment.apiUrl + '/auth/token/', payload).pipe(
+  login(payload: LoginRequest): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(environment.apiUrl + '/auth/token/', payload).pipe(
       tap((response) => {
         localStorage.setItem(this.tokenKey, response.access);
+        localStorage.setItem(this.refreshTokenKey, response.refresh);
       })
     );
   }
@@ -73,14 +74,18 @@ export class AuthService {
         );
   };
 
-  updateToken(): Observable<LoginResponse> {
+  updateToken(): Observable<RegisterResponse> {
     const refreshToken = localStorage.getItem(this.refreshTokenKey);
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }else{
-        return this.http.post<LoginResponse>(environment.apiUrl + '/auth/token/refresh/', { refreshToken }).pipe(
+        return this.http.post<RegisterResponse>(environment.apiUrl + '/auth/token/refresh/', { token: refreshToken }).pipe(
             tap((response) => {
                 localStorage.setItem(this.tokenKey, response.access);
+            }),
+            catchError((e) => { 
+                console.error("Error occurred while refreshing token:", e);
+                return of({ access: '', refresh: '', user: { id: 0, email: '', name: '' } });
             })
         );
     }
