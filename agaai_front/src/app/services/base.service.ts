@@ -39,7 +39,7 @@ export class BaseApiService {
 
   protected get<T>(
     endpoint: string,
-    params?: HttpParams,
+    params?: HttpParams | Record<string, string>,
     options?: RequestOptions,
   ): Observable<T> {
     return this.http

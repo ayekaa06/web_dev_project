@@ -21,7 +21,7 @@ export type SubmitModel = {
 type RecordItem = Badge | Benchmark | Prompt;
 
 interface ModelRecordAPI {
-  getAllModels(): Observable<ListModel[]>;
+  getAllModels(params?: Record<string, string>): Observable<ListModel[]>;
 
   getById(id: number): Observable<Model> | null;
 
@@ -38,8 +38,8 @@ interface ModelRecordAPI {
 
 @Injectable({ providedIn: 'root' })
 export class ModelApiService extends BaseApiService implements ModelRecordAPI {
-  getAllModels(): Observable<ListModel[]> {
-    return this.get<ListModel[]>(`api/model-records/`).pipe(
+  getAllModels(params?: Record<string, string> | undefined): Observable<ListModel[]> {
+    return this.get<ListModel[]>(`api/model-records/`, params).pipe(
       tap((response) => console.log('Fetched models:', response)),
     );
   }

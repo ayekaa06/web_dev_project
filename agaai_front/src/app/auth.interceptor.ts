@@ -35,7 +35,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           console.log("New refresh", newTokens)
           const retriedReq = authReq.clone({
             setHeaders: {
-              Authorization: `Bearer ${localStorage.getItem(authService.tokenKey)}`,
+              Authorization: `Bearer ${newTokens.access}`,
             },
           });
 

@@ -5,6 +5,7 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.filters import OrderingFilter
 
 from .filters import MLModelRecordFilter
 from .models import Badge, Benchmark, MLArchitectureFile, MLModel, MLModelRecord, Prompt
@@ -29,14 +30,12 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
     serializer_class = MLModelRecordSerializer
     permission_classes = [IsAuthenticated]
 
-    filterset_class = MLModelRecordFilter
-    search_fields = [
-        "description",
-        "custom_note",
-        "model_fullref__model_name",
-        "model_fullref__author",
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
     ]
-    ordering_fields = ["id", "model_fullref__model_name"]
+    filterset_class = MLModelRecordFilter
+    ordering_fields = ["id", "model_fullref__model_name", "updated_at"]
     ordering = ["id"]
 
     def get_serializer_class(self):

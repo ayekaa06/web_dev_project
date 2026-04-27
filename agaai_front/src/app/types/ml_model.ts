@@ -59,3 +59,23 @@ export type Model = {
 };
 
 export type Profiling = Omit<Benchmark, 'value'> & { value: string | null };
+
+
+export interface AdvancedFilters {
+  search?: string;
+  author?: string;
+  version?: string;
+  model_name?: string;
+  badge?: string;
+  dependencies_has_key?: string;
+  dependencies_not_has_key?: string;
+  updated_after?: string;
+  updated_before?: string;
+  is_quantized?: string;
+  param_count_gt?: string;
+  param_count_lt?: string;
+  benchmark_name?: string;
+  benchmark_score_gt?: string;
+  benchmark_score_lt?: string;
+  ordering?: string;
+}

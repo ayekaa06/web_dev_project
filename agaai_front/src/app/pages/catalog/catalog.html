@@ -11,6 +11,9 @@
       [style.color]="theme.text"
       [style.border]="'1px solid ' + theme.border"
     />
+    <button class="add-model-btn" (click)="openAdvancedSearch()">
+      Advanced Search
+    </button>
     <button class="add-model-btn" (click)="openModal()">Добавить модель</button>
   </div>
 
@@ -129,8 +132,114 @@
   <p class="empty">Ничего не найдено</p>
   }
 
-  <!-- <div *ngIf="submittedModelJson" class="submitted-json" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
-    <h3>Submitted model payload</h3>
-    <pre>{{ submittedModelJson }}</pre>
-  </div> -->
+  <div *ngIf="showAdvancedSearch" class="modal-overlay">
+    <div
+      class="modal-card"
+      [style.background]="theme.block"
+      [style.border]="'1px solid ' + theme.border"
+    >
+      <div class="modal-header">
+        <h2>Advanced Search</h2>
+        <button class="close-btn" (click)="closeAdvancedSearch()">×</button>
+      </div>
+
+      <div class="field-row">
+        <label>Full-text search</label>
+        <input [(ngModel)]="advancedFilters.search" placeholder="llama benchmark quantized" />
+      </div>
+
+      <div class="field-row">
+        <label>Author</label>
+        <input [(ngModel)]="advancedFilters.author" placeholder="meta" />
+      </div>
+
+      <div class="field-row">
+        <label>Model name</label>
+        <input [(ngModel)]="advancedFilters.model_name" placeholder="llama" />
+      </div>
+
+      <div class="field-row">
+        <label>Version</label>
+        <input [(ngModel)]="advancedFilters.version" placeholder="v1" />
+      </div>
+
+      <div class="field-row">
+        <label>Badge</label>
+        <input [(ngModel)]="advancedFilters.badge" placeholder="Fast / LLM / Open-source" />
+      </div>
+
+      <div class="field-row">
+        <label>Dependencies include key</label>
+        <input [(ngModel)]="advancedFilters.dependencies_has_key" placeholder="torch" />
+      </div>
+
+      <div class="field-row">
+        <label>Dependencies do not include key</label>
+        <input [(ngModel)]="advancedFilters.dependencies_not_has_key" placeholder="tensorflow" />
+      </div>
+
+      <div class="field-row">
+        <label>Updated after</label>
+        <input type="datetime-local" [(ngModel)]="advancedFilters.updated_after" />
+      </div>
+
+      <div class="field-row">
+        <label>Updated before</label>
+        <input type="datetime-local" [(ngModel)]="advancedFilters.updated_before" />
+      </div>
+
+      <div class="field-row">
+        <label>Is quantized</label>
+        <select [(ngModel)]="advancedFilters.is_quantized">
+          <option value="">Any</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <label>Param count greater than</label>
+        <input type="number" [(ngModel)]="advancedFilters.param_count_gt" />
+      </div>
+
+      <div class="field-row">
+        <label>Param count less than</label>
+        <input type="number" [(ngModel)]="advancedFilters.param_count_lt" />
+      </div>
+
+      <div class="field-row">
+        <label>Benchmark name</label>
+        <input [(ngModel)]="advancedFilters.benchmark_name" placeholder="mmlu" />
+      </div>
+
+      <div class="field-row">
+        <label>Benchmark score greater than</label>
+        <input type="number" step="0.01" [(ngModel)]="advancedFilters.benchmark_score_gt" />
+      </div>
+
+      <div class="field-row">
+        <label>Benchmark score less than</label>
+        <input type="number" step="0.01" [(ngModel)]="advancedFilters.benchmark_score_lt" />
+      </div>
+
+      <div class="field-row">
+        <label>Ordering</label>
+        <select [(ngModel)]="advancedFilters.ordering">
+          <option value="">Default</option>
+          <option value="id">ID ascending</option>
+          <option value="-id">ID descending</option>
+          <option value="model_fullref__model_name">Model name A-Z</option>
+          <option value="-model_fullref__model_name">Model name Z-A</option>
+          <option value="updated_at">Updated oldest first</option>
+          <option value="-updated_at">Updated newest first</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="submit-btn" (click)="applyAdvancedSearch()">Apply</button>
+        <button class="cancel-btn" (click)="resetAdvancedSearch()">Reset</button>
+        <button class="cancel-btn" (click)="closeAdvancedSearch()">Cancel</button>
+      </div>
+    </div>
+  </div>
 </div>

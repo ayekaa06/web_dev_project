@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ModelsService, Model } from '../../services/models';
 import { ThemeService } from '../../services/theme';
 import { ModelCard } from '../../components/model-card/model-card';
-import { Benchmark, Dependency, Profiling, Prompt } from '../../types/ml_model';
+import { AdvancedFilters, Benchmark, Dependency, Profiling, Prompt } from '../../types/ml_model';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ModelApiService, SubmitModel } from '../../services/model.service';
 import { Subject } from 'rxjs/internal/Subject';
@@ -21,10 +21,11 @@ export class Catalog {
   search = signal('');
   refresh$ = new Subject<void>();
   modelService = inject(ModelApiService);
+  appliedQueryParams = signal<Record<string, string>>({});
   models = toSignal(
     this.refresh$.pipe(
       startWith(null), // load immediately on init
-      switchMap(() => this.modelService.getAllModels()),
+      switchMap(() => this.modelService.getAllModels(this.appliedQueryParams())),
     ),
     { initialValue: [] },
   );
@@ -205,23 +206,58 @@ export class Catalog {
       },
     });
     console.log('SubmitModel payload', payload);
-    // this.submittedModelJson = JSON.stringify(payload, null, 2);
-
-    // const localModel: Model = {
-    //   id: Date.now(),
-    //   name: payload.custom_name || payload.model_name,
-    //   uniq_name: payload.model_name,
-    //   description: payload.description || '',
-    //   custom_note: payload.custom_note || null,
-    //   badges: payload.badges,
-    //   prompts: payload.prompts ? payload.prompts.map(p => p.content || p.name) : null,
-    //   dependencies: payload.dependencies || null,
-    //   profiling: payload.profiling || null,
-    //   architecture: null,
-    //   benchmarks: payload.benchmarks || null
-    // };
-    // this.models = toSignal(this.modelService.getAllModels(), { initialValue: [] });
-    // this.modelsService.addModel(localModel);
     this.closeModal();
+  }
+
+  showAdvancedSearch = false;
+
+  advancedFilters: AdvancedFilters = {
+    search: '',
+    author: '',
+    version: '',
+    model_name: '',
+    badge: '',
+    dependencies_has_key: '',
+    dependencies_not_has_key: '',
+    updated_after: '',
+    updated_before: '',
+    is_quantized: '',
+    param_count_gt: '',
+    param_count_lt: '',
+    benchmark_name: '',
+    benchmark_score_gt: '',
+    benchmark_score_lt: '',
+    ordering: '',
+  };
+
+  openAdvancedSearch() {
+    this.showAdvancedSearch = true;
+  }
+
+  closeAdvancedSearch() {
+    this.showAdvancedSearch = false;
+  }
+
+  applyAdvancedSearch() {
+    const params: Record<string, string> = {};
+
+    Object.entries(this.advancedFilters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && String(value).trim() !== '') {
+        params[key] = String(value).trim();
+      }
+    });
+
+    this.appliedQueryParams.set(params);
+    this.refresh$.next();
+    this.closeAdvancedSearch();
+  }
+
+  resetAdvancedSearch() {
+    (Object.keys(this.advancedFilters) as Array<keyof AdvancedFilters>).forEach((key) => {
+      this.advancedFilters[key] = '';
+    });
+
+    this.appliedQueryParams.set({});
+    this.refresh$.next();
   }
 }

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class MLModel(models.Model):
@@ -46,6 +47,7 @@ class MLModelRecord(models.Model):
     profiling = models.JSONField(default=dict, blank=True)
     prompts = models.ManyToManyField("Prompt",
                                      related_name="model_records")
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "MLModel Record"
@@ -58,7 +60,7 @@ class MLModelRecord(models.Model):
         ]
 
     def __str__(self):
-        return f"Record {self.record_id} - {self.model_fullref}"
+        return f"Record {self.user_id} - {self.model_fullref}"
 
 
 def architecture_file_upload_path(instance, filename):
@@ -138,6 +140,10 @@ class UserReview(models.Model):
         MLModel, on_delete=models.CASCADE, related_name="reviews"
     )
     review_text = models.TextField(blank=True)
+    rank = models.SmallIntegerField(default=3, validators=[
+            MinValueValidator(1),
+            MaxValueValidator(5)
+        ])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
