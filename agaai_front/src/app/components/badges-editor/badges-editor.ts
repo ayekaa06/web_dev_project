@@ -14,6 +14,7 @@ import { badgeName } from '../../types/model-record';
 export class BadgesEditor {
   @Input() model!: Model | null;
   @Output() saved = new EventEmitter<{ property: string; value: any }>();
+  @Output() nestedUpdate = new EventEmitter<{ property: string; operation: 'add' | 'remove'; value: any }>();
 
   badge = '';
 
@@ -25,8 +26,19 @@ export class BadgesEditor {
 
   save() {
     if (!this.model) return;
-    const newBadges = this.badge.trim() ? [this.badge.trim()] : [];
+    const newBadges = this.badge.trim() ? [...(this.model.badges || []), this.badge.trim()] : [...(this.model.badges || [])];
     showToast('Badge saved');
-    this.saved.emit({ property: 'badges', value: newBadges });
+    // this.saved.emit({ property: 'badges', value: newBadges });
+    this.nestedUpdate.emit({ property: 'badges', operation: 'add', value: { badge_name: this.badge.trim() } });
+  }
+
+  remove(idx: number) {
+    if (!this.model) return;
+    const removed = (this.model.badges || [])[idx];
+    const newBadges = (this.model.badges || []).filter((_, i) => i !== idx);
+    showToast('Badge removed');
+    // this.saved.emit({ property: 'badges', value: newBadges });
+    const payload = {badge_name: removed.name}
+    this.nestedUpdate.emit({ property: 'badges', operation: 'remove', value: payload });
   }
 }

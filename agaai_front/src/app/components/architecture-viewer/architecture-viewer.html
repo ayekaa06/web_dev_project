@@ -3,11 +3,16 @@
     <button class="nav" (click)="prev()" [disabled]="current===0">◀</button>
     <div class="indicator">{{ current + 1 }} / {{ totalSlides }}</div>
     <button class="nav" (click)="next()" [disabled]="current >= totalSlides - 1">▶</button>
+    <label class="upload-inline">
+      <input type="file" accept="image/*,.svg" (change)="handleFileInput($event)" />
+      <span class="upload-label">Upload</span>
+    </label>
   </div>
 
   <div class="slide" *ngIf="!isDiagramSlide()">
     <ng-container *ngIf="currentItem() as file">
       <img *ngIf="isImage(file)" [src]="file" alt="architecture image" />
+      <button class="delete-file" (click)="handleDeleteItem(architectures?.[current])">Delete</button>
       <div *ngIf="!isImage(file)" class="file-card">
         <div class="file-name">{{ file }}</div>
         <div class="file-type">{{ file.split('.').pop() || 'file' }}</div>
@@ -19,7 +24,7 @@
   </div>
 
   <div class="slide diagram-slide" *ngIf="isDiagramSlide()">
-    <app-diagram></app-diagram>
+    <app-diagram [architectures]="architectures" [recordId]="model?.record_id" (jsonUploaded)="jsonUploaded.emit($event)"></app-diagram>
   </div>
 
   <div class="thumbnails">

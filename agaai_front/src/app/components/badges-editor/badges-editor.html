@@ -1,7 +1,17 @@
 <div class="editor-card" *ngIf="model">
   <h3>Badge</h3>
-  <input [(ngModel)]="badge" placeholder="Single badge" />
-  <div class="actions">
-    <button (click)="save()" class="editor-btn">Сохранить</button>
+  <ul>
+    @for (b of model.badges || []; track b.name) {
+      <li class="badge-item">
+        <span>{{ b.name }}</span>
+        <button class="remove" (click)="remove($index)">x</button>
+      </li>
+    }
+  </ul>
+  <div class="add-row">
+    <input [(ngModel)]="badge" placeholder="Badge name" />
+    <div class="actions">
+      <button (click)="save()" class="editor-btn">Добавить</button>
+    </div>
   </div>
 </div>

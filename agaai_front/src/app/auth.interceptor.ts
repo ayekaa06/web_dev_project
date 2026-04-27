@@ -31,10 +31,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       return authService.updateToken().pipe(
-        switchMap((newToken) => {
+        switchMap((newTokens) => {
+          console.log("New refresh", newTokens)
           const retriedReq = authReq.clone({
             setHeaders: {
-              Authorization: `Bearer ${newToken}`,
+              Authorization: `Bearer ${localStorage.getItem(authService.tokenKey)}`,
             },
           });
 

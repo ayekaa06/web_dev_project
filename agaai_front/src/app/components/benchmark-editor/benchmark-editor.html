@@ -1,11 +1,25 @@
 <div class="editor-card" *ngIf="model">
   <h3>Добавить бенчмарк</h3>
-  <label>Benchmark</label>
-  <select [(ngModel)]="benchmark">
-    @for (b of benchmarks; track b) {
-      <option [value]="b">{{b}}</option>
+  <ul>
+    @for (b of model.benchmarks || []; track b.name) {
+        <li class="benchmark-item">
+          <strong>{{ b.name }}</strong>
+          <button class="remove" (click)="remove($index)">x</button>
+        </li>
+    }
+  </ul>
+  <label>Choose existing (parsed) or type new</label>
+  <select [(ngModel)]="selectedSuggestionName" (ngModelChange)="onSelectExisting($event)">
+    <option [ngValue]="null">-- choose existing benchmark --</option>
+    @for (b of benchmarks() || []; track b.name) {
+      <option [value]="b.name">{{ b.name }}</option>
     }
   </select>
+
+  <div style="margin-top:8px">Or type a new name</div>
+  <input [(ngModel)]="benchmark.name" placeholder="Benchmark name" />
+  <label>Description (optional)</label>
+  <input [(ngModel)]="benchmark.description" placeholder="Description" />
   <label>Value (%)</label>
   <input type="number" [(ngModel)]="value" />
   <div class="actions">

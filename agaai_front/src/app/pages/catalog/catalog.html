@@ -7,7 +7,6 @@
       class="search"
       placeholder="Search..."
       [(ngModel)]="search"
-      (ngModelChange)="onSearch()"
       [style.background]="theme.input"
       [style.color]="theme.text"
       [style.border]="'1px solid ' + theme.border"
@@ -19,8 +18,8 @@
     @for (f of filters; track f) {
     <button
       (click)="setFilter(f)"
-      [style.background]="filter === f ? '#38bdf8' : theme.input"
-      [style.color]="filter === f ? '#000' : theme.text"
+      [style.background]="filter() === f ? '#38bdf8' : theme.input"
+      [style.color]="filter() === f ? '#000' : theme.text"
       class="filter-btn"
     >
       {{ f }}

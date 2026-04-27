@@ -79,8 +79,9 @@ export class AuthService {
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }else{
-        return this.http.post<RegisterResponse>(environment.apiUrl + '/auth/token/refresh/', { token: refreshToken }).pipe(
+        return this.http.post<RegisterResponse>(environment.apiUrl + '/auth/token/refresh/', { refresh: refreshToken }).pipe(
             tap((response) => {
+                console.log("Update token response", response);
                 localStorage.setItem(this.tokenKey, response.access);
             }),
             catchError((e) => { 

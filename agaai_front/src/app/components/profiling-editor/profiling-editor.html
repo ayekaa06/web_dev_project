@@ -1,11 +1,7 @@
 <div class="editor-card" *ngIf="model">
   <h3>Добавить профильную метрику</h3>
   <label>Metric</label>
-  <select [(ngModel)]="metric">
-    @for (m of metrics; track m) {
-      <option [value]="m">{{m}}</option>
-    }
-  </select>
+  <input [(ngModel)]="metric" placeholder="Metric name (e.g. Latency)" />
   <label>Value</label>
   <input type="number" [(ngModel)]="value" />
   <div class="actions">

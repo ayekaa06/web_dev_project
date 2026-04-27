@@ -14,21 +14,22 @@ import { Prompt } from '../../types/ml_model';
 export class PromptsEditor {
   @Input() model!: Model | null;
   @Output() saved = new EventEmitter<{ property: string; value: any }>();
+  @Output() nestedUpdate = new EventEmitter<{ property: string; operation: 'add' | 'remove'; value: any }>();
 
   newPrompt: Prompt = { name: '', prompt_template: '' };
 
   add() {
     if (!this.model || !this.newPrompt.prompt_template.trim()) return;
-    const newPrompts = [...(this.model.prompts || []), { ...this.newPrompt }];
-    this.newPrompt = { name: '', prompt_template: '' };
     showToast('Prompt added');
-    this.saved.emit({ property: 'prompts', value: newPrompts });
+    this.nestedUpdate.emit({ property: 'prompts', operation: 'add', value: { prompt_name: this.newPrompt.name, prompt_template: this.newPrompt.prompt_template } });
+    this.newPrompt = { name: '', prompt_template: '' };
   }
 
   remove(idx: number) {
     if (!this.model) return;
-    const newPrompts = (this.model.prompts || []).filter((_, i) => i !== idx);
+    const removed = (this.model.prompts || [])[idx];
     showToast('Prompt removed');
-    this.saved.emit({ property: 'prompts', value: newPrompts });
+    const removePayload = { prompt_name: removed.name };
+    this.nestedUpdate.emit({ property: 'prompts', operation: 'remove', value: removePayload });
   }
 }

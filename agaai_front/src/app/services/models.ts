@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { Benchmark, Dependency, Profiling, Prompt } from '../types/ml_model';
+import { ArchitectureFile, Badge, Benchmark, Dependency, Profiling, Prompt } from '../types/ml_model';
 
 export type MLModel = {
   id: number;
@@ -18,11 +18,11 @@ export type Model = {
   uniq_name: string;
   description: string;
   custom_note: string | null;
-  badges?: string[] | null;
+  badges?: Badge[] | null;
   prompts?: Prompt[] | null;
   dependencies?: Dependency[] | null;
   profiling?: Profiling[] | null;
-  architecture?: string[] | null;
+  architecture?: ArchitectureFile[] | null;
   benchmarks?: Benchmark[] | null;
 };
 

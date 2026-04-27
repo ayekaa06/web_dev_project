@@ -2,7 +2,15 @@
   <div class="card" [style.background]="theme.card" [style.color]="theme.text">
     <div class="header">
       <h3>{{ model.custom_name }}</h3>
-      <span class="badge">{{ model.badges?.join(', ') || 'No badge' }}</span>
+      @if (model.badges?.length){
+        <ul>
+          @for (b of model!.badges!.slice(0, 2) || []; track b.name) {
+          <span class="badge">{{ b.name }}</span>
+          }
+        </ul>
+      }@else{
+        <span class="badge">No badges</span>
+      }
     </div>
     <p class="desc">{{ model.description }}</p>
   </div>

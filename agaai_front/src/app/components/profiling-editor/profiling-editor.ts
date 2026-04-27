@@ -15,13 +15,13 @@ export class ProfilingEditor {
   @Input() model!: Model | null;
   @Output() saved = new EventEmitter<{ property: string; value: any }>();
 
-  metrics = ['Latency', 'Memory', 'Throughput'];
-  metric = this.metrics[0];
-  value: string | null = null;
+  // allow typing metric name instead of selecting
+  metric: string = '';
+  value: number | null = null;
 
   save() {
     if (!this.model) return;
-    const entry: Profiling = { name: this.metric, description: '', value: String(this.value) || null };
+    const entry: Profiling = { name: this.metric.trim(), description: '', value: this.value != null ? String(this.value) : null };
     const newProfiling = [...(this.model.profiling || []), entry];
     showToast('Profiling metric saved');
     this.saved.emit({ property: 'profiling', value: newProfiling });

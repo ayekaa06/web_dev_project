@@ -10,10 +10,12 @@ from .filters import MLModelRecordFilter
 from .models import Badge, Benchmark, MLArchitectureFile, MLModel, MLModelRecord, Prompt
 from .serializers import (
     BadgeSerializer,
+    BenchmarkSetSerializer,
     BenchmarkSerializer,
     MLModelRecordListSerializer,
     MLModelRecordSerializer,
     PromptSerializer,
+    MLArchitectureFileSerializer
 )
 
 
@@ -43,7 +45,7 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
         else:
             return MLModelRecordSerializer
 
-    @action(detail=True, methods=["post"], url_path="add-benchmark")
+    @action(detail=True, methods=["post"], url_path="add-benchmarks")
     def add_benchmark(self, request, pk=None):
         record = self.get_object()
         benchmark_id = request.data.get("benchmark_id")
@@ -89,14 +91,14 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
 
         record.benchmarks.add(benchmark, through_defaults={"value": value_num})
         return Response(
-            {
-                "message": "Benchmark added successfully",
-                "benchmark": benchmark.name,
-                "value": value_num,
-            }
+            # {
+            #     "message": "Benchmark added successfully",
+            #     "data": BenchmarkSerializer(record.benchmarks.all(), many=True).data,
+            # }
+            BenchmarkSetSerializer(record.benchmark_sets.all(), many=True).data
         )
 
-    @action(detail=True, methods=["post"], url_path="remove-benchmark")
+    @action(detail=True, methods=["post"], url_path="remove-benchmarks")
     def remove_benchmark(self, request, pk=None):
         record = self.get_object()
         benchmark_id = request.data.get("benchmark_id")
@@ -120,10 +122,14 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
 
         record.benchmarks.remove(benchmark)
         return Response(
-            {"message": "Benchmark removed successfully", "benchmark": benchmark.name}
+            # {
+            #     "message": "Benchmark removed successfully",
+            #     "data": BenchmarkSerializer(record.benchmarks.all(), many=True).data,
+            # }
+            BenchmarkSetSerializer(record.benchmark_sets.all(), many=True).data
         )
 
-    @action(detail=True, methods=["post"], url_path="add-prompt")
+    @action(detail=True, methods=["post"], url_path="add-prompts")
     def add_prompt(self, request, pk=None):
         record = self.get_object()
         prompt_id = request.data.get("prompt_id")
@@ -154,23 +160,22 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
 
         record.prompts.add(prompt)
         return Response(
-            {
-                "message": "Prompt added successfully",
-                "prompt_template": prompt.prompt_template,
-            }
+            # {
+            #     "message": "Prompt added successfully",
+            #     "data": PromptSerializer(record.prompts.all(), many=True).data,
+            # }
+            PromptSerializer(record.prompts.all(), many=True).data
         )
 
-    @action(detail=True, methods=["post"], url_path="remove-prompt")
+    @action(detail=True, methods=["post"], url_path="remove-prompts")
     def remove_prompt(self, request, pk=None):
         record = self.get_object()
         prompt_id = request.data.get("prompt_id")
-        prompt_template = request.data.get("prompt_template") or request.data.get(
-            "content"
-        )
+        prompt_name = request.data.get("prompt_name") or request.data.get("name")
 
-        if not prompt_id and not prompt_template:
+        if not prompt_id and not prompt_name:
             return Response(
-                {"error": "prompt_id or prompt_template is required"},
+                {"error": "prompt_id or prompt_name is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -178,7 +183,7 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
             if prompt_id:
                 prompt = Prompt.objects.get(id=prompt_id)
             else:
-                prompt = Prompt.objects.get(prompt_template=prompt_template)
+                prompt = Prompt.objects.get(name=prompt_name)
         except Prompt.DoesNotExist:
             return Response(
                 {"error": "Prompt not found"}, status=status.HTTP_404_NOT_FOUND
@@ -186,15 +191,19 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
 
         record.prompts.remove(prompt)
         return Response(
-            {"message": "Prompt removed successfully", "prompt_name": prompt.name}
+            # {
+            #     "message": "Prompt removed successfully",
+            #     "data": PromptSerializer(record.prompts.all(), many=True).data,
+            # }
+            PromptSerializer(record.prompts.all(), many=True).data
         )
 
-    @action(detail=True, methods=["post"], url_path="add-badge")
+    @action(detail=True, methods=["post"], url_path="add-badges")
     def add_badge(self, request, pk=None):
         record = self.get_object()
         badge_id = request.data.get("badge_id")
         badge_name = request.data.get("badge_name")
-        badge = None
+
         if badge_id:
             try:
                 badge = Badge.objects.get(id=badge_id)
@@ -214,10 +223,12 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
             )
         # attach badge via many-to-many
         record.badges.add(badge)
-        badges_list = [b.name for b in record.badges.all()]
-        return Response({"message": "Badge assigned", "badges": badges_list})
+        return Response(
+            # {"message": "Badge assigned", "data": BadgeSerializer(record.badges.all(), many=True).data}
+            BadgeSerializer(record.badges.all(), many=True).data
+        )
 
-    @action(detail=True, methods=["post"], url_path="remove-badge")
+    @action(detail=True, methods=["post"], url_path="remove-badges")
     def remove_badge(self, request, pk=None):
         record = self.get_object()
         badge_id = request.data.get("badge_id")
@@ -242,8 +253,10 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
             )
         if badge:
             record.badges.remove(badge)
-        badges_list = [b.name for b in record.badges.all()]
-        return Response({"message": "Badge removed", "badges": badges_list})
+        return Response(
+            # {"message": "Badge removed", "data": BadgeSerializer(record.badges.all(), many=True).data}
+            BadgeSerializer(record.badges.all(), many=True).data
+        )
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
@@ -329,19 +342,16 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
 class BenchmarkViewSet(viewsets.ModelViewSet):
     queryset = Benchmark.objects.all()
     serializer_class = BenchmarkSerializer
-    permission_classes = [IsAuthenticated]
 
 
 class PromptViewSet(viewsets.ModelViewSet):
     queryset = Prompt.objects.all()
     serializer_class = PromptSerializer
-    permission_classes = [IsAuthenticated]
 
 
 class BadgeViewSet(viewsets.ModelViewSet):
     queryset = Badge.objects.all()
     serializer_class = BadgeSerializer
-    permission_classes = [IsAuthenticated]
 
 
 class RawUploadView(APIView):
@@ -382,6 +392,33 @@ class RawUploadView(APIView):
         af = MLArchitectureFile.objects.create(
             record=record, file=uploaded_file, description=filename
         )
+        af.save()
         return Response(
-            {"id": af.id, "file": af.file.name}, status=status.HTTP_201_CREATED
+            MLArchitectureFileSerializer(af).data, status=status.HTTP_201_CREATED
         )
+
+
+class ArchitectureDeleteView(APIView):
+    """Delete a single architecture file for a record.
+
+    DELETE /.../delete-architecture/{record_id}/{file_id}/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, record_id, file_id, format=None):
+        try:
+            record = MLModelRecord.objects.get(id=record_id)
+        except MLModelRecord.DoesNotExist:
+            return Response({"error": "MLModelRecord not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # ensure user owns the record
+        if getattr(record.user_id, "id", None) != getattr(request.user, "id", None):
+            return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            af = MLArchitectureFile.objects.get(id=file_id, record=record)
+        except MLArchitectureFile.DoesNotExist:
+            return Response({"error": "Architecture file not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        af.delete()
+        return Response({"message": "Architecture file deleted", "id": file_id}, status=status.HTTP_200_OK)

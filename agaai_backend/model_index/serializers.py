@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import (
     Badge,
     Benchmark,
+    BenchmarkSet,
     MLArchitectureFile,
     MLModel,
     MLModelRecord,
@@ -18,7 +19,7 @@ class MLArchitectureFileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "file",
-            "description",
+            "description"
         ]
         read_only_fields = ["id"]
 
@@ -26,13 +27,32 @@ class MLArchitectureFileSerializer(serializers.ModelSerializer):
 class PromptSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prompt
-        fields = ["id", "prompt_template"]
+        fields = ["id", "name", "prompt_template"]
+
 
 
 class BenchmarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Benchmark
         fields = ["id", "name", "description", "source", "formula"]
+
+
+class BenchmarkSetSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="benchmark.id", read_only=True)
+    name = serializers.CharField(source="benchmark.name", read_only=True)
+    description = serializers.CharField(source="benchmark.description", read_only=True)
+    source = serializers.CharField(source="benchmark.source", read_only=True)
+    formula = serializers.CharField(source="benchmark.formula", read_only=True)
+
+    class Meta:
+        model = BenchmarkSet
+        fields = ["id", "name", "description", "source", "formula", "value"]
+
+
+class BadgeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Badge
+        fields = ["name", "description"]
 
 
 class MLModelSerializer(serializers.ModelSerializer):
@@ -50,6 +70,7 @@ class MLModelSerializer(serializers.ModelSerializer):
 
 class MLModelRecordListSerializer(serializers.ModelSerializer):
     record_id = serializers.IntegerField(source="id", read_only=True)
+    badges = BadgeSerializer(many=True, read_only=True)
 
     class Meta:
         model = MLModelRecord
@@ -75,8 +96,13 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
         child=serializers.DictField(), write_only=True, required=False
     )
 
-    benchmarks = BenchmarkSerializer(many=True, read_only=True)
+    benchmarks = BenchmarkSetSerializer(
+        source="benchmark_sets",
+        many=True,
+        read_only=True
+    )
     prompts = PromptSerializer(many=True, read_only=True)
+    badges = BadgeSerializer(many=True, read_only=True)
 
     class Meta:
         model = MLModelRecord
@@ -222,12 +248,6 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
 
             # add via through model with value
             record.benchmarks.add(benchmark_obj, through_defaults={"value": value_num})
-
-
-class BadgeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Badge
-        fields = ["name", "description"]
 
 
 class MLModelRecordPartialUpdateSerializer(serializers.ModelSerializer):

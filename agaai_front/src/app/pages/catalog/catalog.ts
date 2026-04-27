@@ -18,7 +18,7 @@ import { startWith } from 'rxjs/internal/operators/startWith';
   styleUrl: './catalog.css',
 })
 export class Catalog {
-  search = '';
+  search = signal('');
   refresh$ = new Subject<void>();
   modelService = inject(ModelApiService);
   models = toSignal(
@@ -28,7 +28,7 @@ export class Catalog {
     ),
     { initialValue: [] },
   );
-  filter = 'All';
+  filter = signal('All');
   filters = ['All', 'LLM', 'Open-source', 'Fast'];
   visible = true;
   showModal = false;
@@ -61,27 +61,27 @@ export class Catalog {
   // }
 
   filtered = computed(() => {
+    console.log('Filtering models with search:', this.search, 'and filter:', this.filter());
     if (!this.models()) return [];
+    this.visible = true;
     return this.models()!.filter(
-      (m) =>
-        m.custom_name.toLowerCase().includes(this.search.toLowerCase()) &&
-        (this.filter === 'All' || m.badges?.map((m) => m.name).includes(this.filter)),
+      (m) =>{
+        console.log(m)
+        return m.custom_name.toLowerCase().includes(this.search().toLowerCase()) &&
+        (this.filter() === 'All' || m.badges?.map((b) => b.name).includes(this.filter()))
+
+      },
     );
   });
 
   setFilter(f: string) {
-    this.visible = false;
-    setTimeout(() => {
-      this.filter = f;
-      this.visible = true;
-    }, 200);
-  }
-
-  onSearch() {
-    this.visible = false;
-    setTimeout(() => {
-      this.visible = true;
-    }, 150);
+    // this.visible = false;
+    this.filter.set(f);
+    // this.visible = true;
+    // setTimeout(() => {
+    //   // this.filter = f;
+    //   this.visible = true;
+    // }, 200);
   }
 
   openModal() {

@@ -7,8 +7,14 @@ import {
   signal,
   computed,
   OnDestroy,
+  Input,
+  Output,
+  EventEmitter,
+  inject,
 } from '@angular/core';
+import { ModelApiService } from '../../services/model.service';
 import * as joint from 'jointjs';
+import { showToast } from '../toast/toast';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +39,11 @@ interface ShapeConfig {
 export class DiagramComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('canvas') canvasRef!: ElementRef;
+  @Input() architectures?: { id?: number; file: string }[] | null;
+  @Input() recordId?: number | null;
+  @Output() jsonUploaded = new EventEmitter<any>();
+
+  private modelApi = inject(ModelApiService);
 
   // ── JointJS internals ──────────────────────────────────────────────────────
   private graph!: joint.dia.Graph;
@@ -65,6 +76,34 @@ export class DiagramComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initGraph();
     this.listenToEvents();
+    // Auto-load from architectures JSON if no local save exists
+    const saved = localStorage.getItem('diagram_save');
+    console.log("Current saved", saved)
+    if (!saved && this.architectures && this.architectures.length) {
+      const jsonItem = this.architectures.find((a) => a.file && a.file.toLowerCase().endsWith('.json'));
+      if (jsonItem) {
+        const url = jsonItem.file;
+        try {
+          fetch(url)
+            .then((r) => r.ok ? r.json() : Promise.reject(new Error('Failed to fetch')))
+            .then((data) => {
+              this.graph.fromJSON(data);
+              this.refreshCounts();
+              this.flash('Diagram loaded from architecture JSON');
+            })
+            .catch((e) => {
+              /* ignore fetch errors */
+              showToast('Failed to load diagram from JSON', 'error');
+              console.log(e)
+            });
+        } catch (e) {
+          // ignore
+        }
+      }
+    }else{
+      console.log("content to load", JSON.parse(saved!))
+      // this.graph.fromJSON(JSON.parse(saved!));
+    }
   }
 
   ngOnDestroy(): void {
@@ -313,8 +352,26 @@ export class DiagramComponent implements AfterViewInit, OnDestroy {
 
   saveJSON(): void {
     const json = JSON.stringify(this.graph.toJSON(), null, 2);
+    console.log('Saving diagram JSON:', json);
+    // If recordId available, upload JSON to architectures endpoint; otherwise fallback to localStorage
     localStorage.setItem('diagram_save', json);
     this.flash('Saved to browser storage');
+    if (this.recordId) {
+      const blob = new Blob([json], { type: 'application/json' });
+      const filename = `diagram-${Date.now()}.json`;
+      const file = new File([blob], filename, { type: 'application/json' });
+      const svc = this.modelApi;
+      svc.uploadArchitecture(this.recordId, filename, file)?.subscribe(
+        (res) => {
+          this.flash('Saved diagram to server');
+          this.jsonUploaded.emit(res);
+        },
+        (error) => {
+          console.error('Failed to save diagram to server:', error);
+          this.flash('Failed to save to server');
+        }
+      );
+    }
   }
 
   loadJSON(): void {

@@ -8,7 +8,13 @@
 
   <div class="hero" [style.border]="'1px solid ' + theme.border">
     <div>
-      <span class="badge">{{ model()?.badges?.join(', ') || 'No badge' }}</span>
+      <ul>
+          @for (b of model()?.badges || []; track b.name) {
+          <span class="badge">{{ b.name }}</span>
+          }
+          <button *ngIf="(model()?.badges?.length || 0) > 0" class="add-btn" (click)="addAttribute('badges')">Изменить бейдж</button>
+      </ul>
+      <!-- <span class="badge">{{ model()?.badges?.[0]?.name || 'No badge' }}</span> -->
       <h1>{{ model()?.custom_name }}</h1>
       <p>Unique reference name: {{ model()?.uniq_name}}</p>
       <p style="opacity: 0.7; margin-top: 2vh">{{ model()?.description }}</p>
@@ -26,6 +32,7 @@
       @for (b of model()?.benchmarks; track b.name) {
       <p>{{b.name + ': ' + b.value + '%'}}</p>
       }
+      <button class="add-btn" (click)="addAttribute('benchmarks')">Изменить бенчмарки</button>
     </div>
   </div>
 
@@ -40,16 +47,13 @@
     <button class="add-btn" (click)="addAttribute('custom_note')">Изменить заметку</button>
   </div>
 
-  <div
+  <!-- <div
     *ngIf="model()?.badges?.length"
     class="card"
     [style.background]="theme.block"
     [style.border]="'1px solid ' + theme.border"
   >
-    <h3 class="card-title">Badges</h3>
-    <p>{{ model()?.badges?.join(', ') }}</p>
-    <button class="add-btn" (click)="addAttribute('badges')">Изменировать бейдж</button>
-  </div>
+  </div> -->
 
   <div
     *ngIf="(model()?.prompts?.length || 0) > 0"
@@ -83,20 +87,22 @@
     (saved)="onAttributeSaved($event)"
   ></app-custom-note-editor>
   <app-architecture-viewer
-    *ngIf="isEditorOpen('architecture')"
+    *ngIf="isEditorOpen('architecture') || model()?.architecture?.length"
     [architectures]="model()?.architecture"
     [model]="model()!"
+    (fileUpload)="onArchitectureFileSelected($event)"
+    (deleteFile)="onArchitectureFileDeleted($event)"
   ></app-architecture-viewer>
 
   <app-badges-editor
     *ngIf="isEditorOpen('badges')"
     [model]="model()!"
-    (saved)="onAttributeSaved($event)"
+    (nestedUpdate)="onNestedUpdate($event)"
   ></app-badges-editor>
   <app-prompts-editor
     *ngIf="isEditorOpen('prompts')"
     [model]="model()!"
-    (saved)="onAttributeSaved($event)"
+    (nestedUpdate)="onNestedUpdate($event)"
   ></app-prompts-editor>
   <app-profiling-editor
     *ngIf="isEditorOpen('profiling')"
@@ -106,7 +112,7 @@
   <app-benchmark-editor
     *ngIf="isEditorOpen('benchmarks')"
     [model]="model()!"
-    (saved)="onAttributeSaved($event)"
+    (nestedUpdate)="onNestedUpdate($event)"
   ></app-benchmark-editor>
 
   <!-- <div class="note-block" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">

@@ -62,10 +62,11 @@ export class BaseApiService {
   protected put<T>(
     endpoint: string,
     body: unknown,
+    headers?: Record<string, string>,
     options?: RequestOptions,
   ): Observable<T> {
     return this.http
-      .put<T>(this.url(endpoint), body)
+      .put<T>(this.url(endpoint), body, { headers })
       .pipe(this.handleErrors(endpoint, options));
   }
 
