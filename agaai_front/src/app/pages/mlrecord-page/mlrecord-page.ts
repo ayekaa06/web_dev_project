@@ -390,8 +390,28 @@ export class MLRecordlPage implements OnInit {
     return this.showEditor()[key];
   }
 
-  parseSources(){
-    return
+  parsingInProgress = signal(false);
+
+  parseSources() {
+    const recordId = this.model()?.record_id;
+    if (!recordId) return;
+
+    this.parsingInProgress.set(true);
+
+    this.modelApi
+      .parseModelSources(recordId)
+      .pipe(take(1))
+      .subscribe({
+        next: (updatedModel) => {
+          this.model.set(updatedModel);
+          this.parsingInProgress.set(false);
+          showToast('Sources parsed successfully', 'success');
+        },
+        error: () => {
+          this.parsingInProgress.set(false);
+          showToast('Failed to parse sources', 'error');
+        },
+      });
   }
 
   getExperience(){

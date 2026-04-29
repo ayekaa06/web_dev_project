@@ -486,6 +486,60 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
     #     record.save()
     #     return Response({'message': 'Dependencies updated successfully'})
 
+    @action(detail=True, methods=["post"], url_path="parse-sources")
+    def parse_sources(self, request, pk=None):
+        record = self.get_object()
+        fullref = record.model_fullref
+
+        model_name = f"{fullref.author}/{fullref.model_name}" if fullref.author else fullref.model_name
+
+        from model_index.services.model_service import ModelInfoService
+        service = ModelInfoService()
+        data = service.get_model_merged(model_name)
+
+        if not data:
+            return Response(
+                {"error": f"No data found for model '{model_name}'"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Обновляем MLModelRecord — только пустые поля
+        record_dirty = False
+        for parser_key, record_field in [("description", "description")]:
+            value = data.get(parser_key)
+            if value and not getattr(record, record_field, None):
+                setattr(record, record_field, value)
+                record_dirty = True
+
+        if record_dirty:
+            record.save()
+
+        # Добавляем бенчмарки из парсера
+        existing_names = set(record.benchmarks.values_list("name", flat=True))
+        for b in (data.get("benchmarks") or []):
+            name = b.get("name") or ""
+            score = b.get("score")
+            if not name or score is None:
+                continue
+            if name.lower() in {n.lower() for n in existing_names}:
+                continue
+            benchmark, _ = Benchmark.objects.get_or_create(
+                name=name,
+                defaults={
+                    "description": b.get("category") or "",
+                    "source": b.get("source") or "",
+                },
+            )
+            try:
+                record.benchmarks.add(benchmark, through_defaults={"value": float(score)})
+                existing_names.add(name)
+            except Exception:
+                pass
+
+        record.refresh_from_db()
+        serializer = MLModelRecordSerializer(record, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def perform_create(self, serializer):
         serializer.save(user_id=self.request.user)
 

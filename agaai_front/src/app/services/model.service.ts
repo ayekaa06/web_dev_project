@@ -180,4 +180,7 @@ export class ModelApiService extends BaseApiService implements ModelRecordAPI {
 
     return this.delete<void>(`api/model-records/${record_id}/`);
   }
+  parseModelSources(record_id: number): Observable<Model> {
+    return this.post<Model>(`api/model-records/${record_id}/parse-sources/`, {});
+  }
 }
