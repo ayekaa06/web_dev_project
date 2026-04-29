@@ -290,18 +290,8 @@ export class MLRecordlPage implements OnInit {
     this.showEditor.set({ ...this.showEditor(), dependencies: false });
   }
 
-  updateDependencyField(index: number, field: string, value: any) {
-    // const arr = [...this.dependenciesEdit()];
-    // if (!arr[index]) return;
-    // arr[index] = { ...arr[index], [field]: value };
-    // this.dependenciesEdit.set(arr);
-    this.dependenciesEdit.update(arr =>
-    arr.map((item, i) => i === index ? { ...item, [field]: value } : item)
-  );
-  }
-
   addDependency() {
-    const arr = [...this.dependenciesEdit(), { name: Date.now().toString(), requirement: '', url: '' }];
+    const arr = [...this.dependenciesEdit(), { name: '', requirement: '', url: '' }];
     this.dependenciesEdit.set(arr);
   }
 

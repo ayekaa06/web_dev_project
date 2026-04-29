@@ -205,9 +205,9 @@
       <div *ngIf="isEditorOpen('dependencies')" class="editor-inline">
         <label class="form-label">Edit dependencies</label>
         <div *ngFor="let d of dependenciesEdit(); let i = index; track i" class="dependency-row">
-          <input class="input" [ngModel]="d.name" (ngModelChange)="updateDependencyField(i, 'name', $event)" placeholder="Name" />
-          <input class="input" [ngModel]="d.requirement" (ngModelChange)="updateDependencyField(i, 'requirement', $event)" placeholder="Requirement (e.g. >=2.0)" />
-          <input class="input" [ngModel]="d.url" (ngModelChange)="updateDependencyField(i, 'url', $event)" placeholder="URL (optional)" />
+          <input class="input" [(ngModel)]="d.name" placeholder="Name" />
+          <input class="input" [(ngModel)]="d.requirement" placeholder="Requirement (e.g. >=2.0)" />
+          <input class="input" [(ngModel)]="d.url" placeholder="URL (optional)" />
           <button class="toggle-btn" type="button" (click)="removeDependency(i)">Remove</button>
         </div>
 
