@@ -33,6 +33,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return authService.updateToken().pipe(
         switchMap((newTokens) => {
           console.log("New refresh", newTokens)
+          console.log("Set to bearer", newTokens.access)
           const retriedReq = authReq.clone({
             setHeaders: {
               Authorization: `Bearer ${newTokens.access}`,

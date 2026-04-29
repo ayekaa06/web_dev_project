@@ -17,7 +17,7 @@ export class ProfilingEditor {
 
   // allow typing metric name instead of selecting
   metric: string = '';
-  value: number | null = null;
+  value: number | string | null = null;
 
   save() {
     if (!this.model) return;

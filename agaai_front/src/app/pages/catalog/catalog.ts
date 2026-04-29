@@ -38,6 +38,8 @@ export class Catalog {
     model_name: '',
     author: '',
     version: '',
+    param_count: null,
+    is_quantized: false,
     description: '',
     custom_note: '',
     badges: null,
@@ -100,6 +102,8 @@ export class Catalog {
       model_name: '',
       author: '',
       version: '',
+      param_count: null,
+      is_quantized: false,
       description: '',
       custom_note: '',
       badges: null,
@@ -179,6 +183,11 @@ export class Catalog {
       model_name: this.newModelForm.model_name.trim(),
       author: this.newModelForm.author.trim(),
       version: this.newModelForm.version.trim(),
+      param_count:
+        this.newModelForm.param_count === null || this.newModelForm.param_count === undefined || this.newModelForm.param_count === ''
+          ? null
+          : this.newModelForm.param_count,
+      is_quantized: !!this.newModelForm.is_quantized,
       description: this.newModelForm.description.trim(),
       custom_note: (this.newModelForm.custom_note || '').trim() || null,
       badges: this.parseArray((this.newModelForm.badges as any) || '') || [],
@@ -225,8 +234,8 @@ export class Catalog {
     param_count_gt: '',
     param_count_lt: '',
     benchmark_name: '',
-    benchmark_score_gt: '',
-    benchmark_score_lt: '',
+    benchmark_value_gt: '',
+    benchmark_value_lt: '',
     ordering: '',
   };
 

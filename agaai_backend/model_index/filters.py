@@ -1,19 +1,27 @@
 import django_filters
-from django.db.models import Q, FloatField
+from django.db.models import Q
+from django.db.models import FloatField
 from django.db.models.functions import Cast
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
-from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Value
-from django.db.models.functions import Coalesce
-from django.db.models import Value, TextField
+try:
+    from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+    from django.contrib.postgres.aggregates import StringAgg
+    from django.db.models.functions import Coalesce
+    from django.db.models import Value, TextField
+    POSTGRES_SEARCH_AVAILABLE = True
+except Exception:  # pragma: no cover - fallback for local non-Postgres validation
+    SearchVector = SearchQuery = SearchRank = None
+    StringAgg = None
+    Coalesce = None
+    Value = None
+    TextField = None
+    POSTGRES_SEARCH_AVAILABLE = False
 
-from .models import MLModelRecord
+from .models import MLModelRecord, UseCase, UserReview
 
 
 class MLModelRecordFilter(django_filters.FilterSet):
     # Existing filters
 
-    
     author = django_filters.CharFilter(
         field_name="model_fullref__author",
         lookup_expr="icontains",
@@ -66,7 +74,6 @@ class MLModelRecordFilter(django_filters.FilterSet):
         lookup_expr="icontains",
     )
 
-    # Depends on your through model field name, example: BenchmarkSet.score
     benchmark_value_gt = django_filters.NumberFilter(method="filter_benchmark_value_gt")
     benchmark_value_lt = django_filters.NumberFilter(method="filter_benchmark_value_lt")
 
@@ -110,13 +117,26 @@ class MLModelRecordFilter(django_filters.FilterSet):
             .filter(param_count_float__lt=value)
         )
 
-    def filter_benchmark_score_gt(self, queryset, name, value):
-        return queryset.filter(benchmarkset__value__gt=value)
+    def filter_benchmark_value_gt(self, queryset, name, value):
+        return queryset.filter(benchmark_sets__value__gt=value)
 
-    def filter_benchmark_score_lt(self, queryset, name, value):
-        return queryset.filter(benchmarkset__value__lt=value)
+    def filter_benchmark_value_lt(self, queryset, name, value):
+        return queryset.filter(benchmark_sets__value__lt=value)
 
     def full_text_search(self, queryset, name, value):
+        if not POSTGRES_SEARCH_AVAILABLE:
+            return (
+                queryset.filter(
+                    Q(description__icontains=value)
+                    | Q(custom_name__icontains=value)
+                    | Q(custom_note__icontains=value)
+                    | Q(model_fullref__model_name__icontains=value)
+                    | Q(model_fullref__author__icontains=value)
+                    | Q(benchmarks__name__icontains=value)
+                )
+                .distinct()
+            )
+
         queryset = queryset.annotate(
             benchmark_names=Coalesce(
                 StringAgg("benchmarks__name", delimiter=" "),
@@ -125,21 +145,75 @@ class MLModelRecordFilter(django_filters.FilterSet):
             )
         )
         vector = (
-            SearchVector("description", weight="A") +
-            SearchVector("custom_name", weight="A") +
-            SearchVector("custom_note", weight="B") +
-            SearchVector("model_fullref__model_name", weight="A") +
-            SearchVector("model_fullref__author", weight="C") +
-            SearchVector("benchmark_names", weight="C")
+            SearchVector("description", weight="A")
+            + SearchVector("custom_name", weight="A")
+            + SearchVector("custom_note", weight="B")
+            + SearchVector("model_fullref__model_name", weight="A")
+            + SearchVector("model_fullref__author", weight="C")
+            + SearchVector("benchmark_names", weight="C")
         )
 
         query = SearchQuery(value, search_type="websearch")
         resulting_set = (
-            queryset
-            .annotate(rank=SearchRank(vector, query))
+            queryset.annotate(rank=SearchRank(vector, query))
             .filter(rank__gte=0.05)
             .order_by("-rank")
             .distinct()
         )
-        print(resulting_set)
         return resulting_set
+
+
+class UseCaseFilter(django_filters.FilterSet):
+    model_id = django_filters.NumberFilter(field_name="model_fullref__id")
+    model_fullref__id = django_filters.NumberFilter(field_name="model_fullref__id")
+    user_id = django_filters.UUIDFilter(field_name="user_id")
+    sphere = django_filters.CharFilter(field_name="sphere", lookup_expr="icontains")
+    is_model_modified = django_filters.BooleanFilter(field_name="is_model_modified")
+    created_after = django_filters.DateTimeFilter(
+        field_name="created_at",
+        lookup_expr="gt",
+    )
+    created_before = django_filters.DateTimeFilter(
+        field_name="created_at",
+        lookup_expr="lt",
+    )
+
+    class Meta:
+        model = UseCase
+        fields = ["model_id", "model_fullref__id", "user_id", "sphere", "is_model_modified", "created_after", "created_before"]
+
+
+class UserReviewFilter(django_filters.FilterSet):
+    model_id = django_filters.NumberFilter(field_name="model_fullref__id")
+    model_fullref__id = django_filters.NumberFilter(field_name="model_fullref__id")
+    user_id = django_filters.UUIDFilter(field_name="user_id")
+    rank = django_filters.NumberFilter(field_name="rank")
+    created_after = django_filters.DateTimeFilter(
+        field_name="created_at",
+        lookup_expr="gt",
+    )
+    created_before = django_filters.DateTimeFilter(
+        field_name="created_at",
+        lookup_expr="lt",
+    )
+    updated_after = django_filters.DateTimeFilter(
+        field_name="updated_at",
+        lookup_expr="gt",
+    )
+    updated_before = django_filters.DateTimeFilter(
+        field_name="updated_at",
+        lookup_expr="lt",
+    )
+
+    class Meta:
+        model = UserReview
+        fields = [
+            "model_id",
+            "model_fullref__id",
+            "user_id",
+            "rank",
+            "created_after",
+            "created_before",
+            "updated_after",
+            "updated_before",
+        ]

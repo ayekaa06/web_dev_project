@@ -1,6 +1,6 @@
 import json
 import time
-from services.model_service import ModelInfoService
+from .model_service import ModelInfoService
 
 service = ModelInfoService()
 

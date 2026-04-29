@@ -1,0 +1,126 @@
+<div class="container" [style.background]="theme.bg" [style.color]="theme.text">
+  <a [routerLink]="backLink()" class="back">Back to model record</a>
+
+  <section class="hero" [style.border]="'1px solid ' + theme.border">
+    <div>
+      <p class="eyebrow">Use-case feed</p>
+      <h1>{{ heroTitle() }}</h1>
+      <p class="hero-subtitle">{{ heroSubtitle() }}</p>
+      <div class="hero-meta">
+        <span class="meta-chip">Model ID {{ modelId }}</span>
+        <span class="meta-chip">{{ useCases().length }} posts</span>
+        <span class="meta-chip" *ngIf="modelMeta().recordId">Record {{ modelMeta().recordId }}</span>
+      </div>
+    </div>
+    <span class="hero-link">Per-model timeline</span>
+  </section>
+
+  <section class="feed-shell" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <div class="feed-header">
+      <div>
+        <p class="eyebrow">Compose</p>
+        <h2>Share a use case</h2>
+      </div>
+      <button class="toggle-btn" type="button" (click)="toggleUseCaseForm()">
+        {{ useCaseFormExpanded() ? 'Hide form' : 'Expand form' }}
+      </button>
+    </div>
+
+    @if (useCaseFormExpanded()) {
+    <form class="post-card compose-card" (ngSubmit)="submitUseCase()">
+      <label class="form-label">Sphere</label>
+      <input class="text-input" [(ngModel)]="useCaseForm.sphere" name="sphere" placeholder="Inference serving" />
+
+      <label class="form-label">Description</label>
+      <textarea
+        class="text-input"
+        [(ngModel)]="useCaseForm.description"
+        name="description"
+        rows="4"
+        placeholder="What does this model do in practice?"
+      ></textarea>
+
+      <div class="inline-grid">
+        <label class="form-label">
+          Tags
+          <input class="text-input" [(ngModel)]="useCaseForm.tags" name="tags" placeholder="latency, edge, rlhf" />
+        </label>
+
+        <label class="form-label">
+          Datasets
+          <input class="text-input" [(ngModel)]="useCaseForm.datasets" name="datasets" placeholder="internal-eval, prod-logs" />
+        </label>
+      </div>
+
+      <label class="toggle-row">
+        <input type="checkbox" [(ngModel)]="useCaseForm.is_model_modified" name="is_model_modified" />
+        <span>Model modified for this use case</span>
+      </label>
+
+      <div class="action-row">
+        <span class="helper-text">Comma-separated lists are converted into tags and datasets.</span>
+        <button class="submit-btn" type="submit">Publish use case</button>
+      </div>
+    </form>
+    } @else {
+    <div class="collapsed-note">
+      <p class="empty-state">The compose form is collapsed. Expand it to publish a new use case.</p>
+    </div>
+    }
+  </section>
+
+  <section class="feed-shell" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <div class="feed-header">
+      <div>
+        <p class="eyebrow">Chronology</p>
+        <h2>Published use cases</h2>
+      </div>
+      <span class="feed-count">{{ useCases().length }} entries</span>
+    </div>
+
+    @if (loading()) {
+    <p class="empty-state">Loading use cases...</p>
+    } @else if (useCases().length) {
+    <div class="feed-list">
+      @for (useCase of useCases(); track useCase.id) {
+      <article class="post-card">
+        <div class="post-top">
+          <div>
+            <p class="author-line">{{ useCase.user.username }}</p>
+            <p class="post-meta">{{ useCase.created_at | date: 'medium' }}</p>
+          </div>
+          <span class="state-chip" [class.state-chip--muted]="!useCase.is_model_modified">
+            {{ useCase.is_model_modified ? 'Modified' : 'Baseline' }}
+          </span>
+        </div>
+
+        <h3 class="post-title">{{ useCase.sphere }}</h3>
+        <p class="post-body">{{ useCase.description }}</p>
+
+        <div class="chip-row" *ngIf="useCase.tags.length">
+          @for (tag of useCase.tags; track tag) {
+          <span class="chip">{{ tag }}</span>
+          }
+        </div>
+
+        <div class="dataset-row" *ngIf="useCase.datasets.length">
+          @for (dataset of useCase.datasets; track dataset) {
+          <span class="dataset-pill">{{ dataset }}</span>
+          }
+        </div>
+
+        <div class="post-footer">
+          <span class="footer-chip">{{ useCase.model_fullref.author }} / {{ useCase.model_fullref.model_name }}</span>
+          <span class="footer-chip">v{{ useCase.model_fullref.version }}</span>
+        </div>
+      </article>
+      }
+    </div>
+    } @else {
+    <div class="empty-block">
+      <p class="empty-state">No use cases were published for this model yet.</p>
+      <a class="panel-link" [routerLink]="backLink()">Return to the record</a>
+    </div>
+    }
+  </section>
+</div>

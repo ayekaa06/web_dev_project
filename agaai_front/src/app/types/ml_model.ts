@@ -20,6 +20,11 @@ export type Badge = {
   description: string;
 };
 
+export type UserSummary = {
+  id: string;
+  username: string;
+};
+
 export type ListModel = {
   record_id: number;
   model_fullref: number;
@@ -37,10 +42,54 @@ export type MLModel = {
   is_quantized: boolean;
 };
 
+export type PaginatedResponse<T> = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+};
+
 export type ArchitectureFile = {
   id: number;
   file: string;
   description: string;
+};
+
+export type UseCase = {
+  id: number;
+  user: UserSummary;
+  model_fullref: MLModel;
+  sphere: string;
+  tags: string[];
+  is_model_modified: boolean;
+  description: string;
+  datasets: string[];
+  created_at: string;
+};
+
+export type UserReview = {
+  id: number;
+  user: UserSummary;
+  model_fullref: MLModel;
+  review_text: string;
+  rank: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UseCaseInput = {
+  sphere: string;
+  tags?: string[];
+  is_model_modified?: boolean;
+  description: string;
+  datasets?: string[];
+  model_id?: number;
+};
+
+export type UserReviewInput = {
+  review_text?: string;
+  rank?: number;
+  model_id?: number;
 };
 
 export type Model = {
@@ -56,6 +105,8 @@ export type Model = {
   architecture?: ArchitectureFile[] | null;
   profiling?: Profiling[] | null;
   benchmarks?: Benchmark[] | null;
+  updated_at?: string;
+  average_review_rank?: number | null;
 };
 
 export type Profiling = Omit<Benchmark, 'value'> & { value: string | null };
@@ -75,7 +126,7 @@ export interface AdvancedFilters {
   param_count_gt?: string;
   param_count_lt?: string;
   benchmark_name?: string;
-  benchmark_score_gt?: string;
-  benchmark_score_lt?: string;
+  benchmark_value_gt?: string;
+  benchmark_value_lt?: string;
   ordering?: string;
 }

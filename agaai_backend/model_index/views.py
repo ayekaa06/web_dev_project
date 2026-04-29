@@ -2,22 +2,135 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FileUploadParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.filters import OrderingFilter
 
-from .filters import MLModelRecordFilter
-from .models import Badge, Benchmark, MLArchitectureFile, MLModel, MLModelRecord, Prompt
+from .filters import MLModelRecordFilter, UseCaseFilter, UserReviewFilter
+from .models import (
+    Badge,
+    Benchmark,
+    MLArchitectureFile,
+    MLModel,
+    MLModelRecord,
+    Prompt,
+    UseCase,
+    UserReview,
+)
 from .serializers import (
     BadgeSerializer,
     BenchmarkSetSerializer,
     BenchmarkSerializer,
     MLModelRecordListSerializer,
     MLModelRecordSerializer,
+    MLModelSerializer,
     PromptSerializer,
-    MLArchitectureFileSerializer
+    MLArchitectureFileSerializer,
+    UseCaseSerializer,
+    UserReviewSerializer,
 )
+
+
+class ReviewPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = "page_size"
+    max_page_size = 25
+
+
+class IsOwnerOrReadOnly(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+
+        owner = getattr(obj, "user_id", None)
+        owner_id = getattr(owner, "id", owner)
+        return bool(
+            request.user.is_authenticated
+            and (
+                request.user.is_staff
+                or request.user.is_superuser
+                or owner_id == request.user.id
+            )
+        )
+
+
+class MLModelViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MLModel.objects.all()
+    serializer_class = MLModelSerializer
+    permission_classes = [IsAuthenticated]
+
+    def _apply_ordering(self, queryset, ordering, allowed_fields, default_ordering):
+        if ordering in allowed_fields:
+            return queryset.order_by(ordering)
+        return queryset.order_by(default_ordering)
+
+    @action(detail=True, methods=["get", "post"], url_path="use-cases")
+    def use_cases(self, request, pk=None):
+        model = self.get_object()
+        queryset = (
+            model.use_cases.select_related("user_id", "model_fullref")
+            .order_by("-created_at")
+        )
+
+        if request.method == "POST":
+            data = request.data.copy()
+            data["model_id"] = model.id
+            serializer = UseCaseSerializer(data=data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user_id=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        queryset = UseCaseFilter(request.query_params, queryset=queryset).qs
+        queryset = self._apply_ordering(
+            queryset,
+            request.query_params.get("ordering"),
+            {"id", "-id", "created_at", "-created_at", "sphere", "-sphere"},
+            "-created_at",
+        )
+        return Response(UseCaseSerializer(queryset, many=True).data)
+
+    @action(detail=True, methods=["get", "post"], url_path="user-reviews")
+    def user_reviews(self, request, pk=None):
+        model = self.get_object()
+        queryset = (
+            model.reviews.select_related("user_id", "model_fullref")
+            .order_by("-created_at")
+        )
+
+        if request.method == "POST":
+            data = request.data.copy()
+            data["model_id"] = model.id
+            serializer = UserReviewSerializer(data=data, context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user_id=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        queryset = UserReviewFilter(request.query_params, queryset=queryset).qs
+        queryset = self._apply_ordering(
+            queryset,
+            request.query_params.get("ordering"),
+            {
+                "id",
+                "-id",
+                "created_at",
+                "-created_at",
+                "updated_at",
+                "-updated_at",
+                "rank",
+                "-rank",
+            },
+            "-created_at",
+        )
+        paginator = ReviewPagination()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        if page is not None:
+            serializer = UserReviewSerializer(page, many=True, context={"request": request})
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = UserReviewSerializer(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
 
 
 class MLModelRecordViewSet(viewsets.ModelViewSet):
@@ -256,30 +369,69 @@ class MLModelRecordViewSet(viewsets.ModelViewSet):
             # {"message": "Badge removed", "data": BadgeSerializer(record.badges.all(), many=True).data}
             BadgeSerializer(record.badges.all(), many=True).data
         )
+    
+    def _normalize_model_metadata(self, data):
+        metadata = {}
+
+        param_count = data.get("param_count")
+        if param_count not in (None, ""):
+            metadata["param_count"] = str(param_count)
+
+        if "is_quantized" in data:
+            is_quantized = data.get("is_quantized")
+            if isinstance(is_quantized, str):
+                metadata["is_quantized"] = is_quantized.lower() in {"true", "1", "yes", "on"}
+            elif is_quantized is not None:
+                metadata["is_quantized"] = bool(is_quantized)
+
+        return metadata
+
+    def _resolve_model_fullref(self, data):
+        model_id = data.get("model_id")
+        metadata = self._normalize_model_metadata(data)
+
+        if model_id:
+            try:
+                model_obj = MLModel.objects.get(id=model_id)
+            except MLModel.DoesNotExist:
+                return None, Response(
+                    {"error": "Model not found by id"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if metadata:
+                for attr, value in metadata.items():
+                    setattr(model_obj, attr, value)
+                model_obj.save(update_fields=list(metadata.keys()))
+
+            return model_obj, None
+
+        author = data.get("author")
+        version = data.get("version")
+        model_name = data.get("model_name")
+
+        if not (author and version and model_name):
+            return None, Response(
+                {
+                    "error": "Either provide model_id or provide model_name, author and version"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        model_obj, _ = MLModel.objects.update_or_create(
+            model_name=model_name,
+            author=author,
+            version=version,
+            defaults=metadata,
+        )
+        return model_obj, None
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-
-        if not data.get("model_id"):
-            author = data.get("author")
-            version = data.get("version")
-
-            model_name = data.get("model_name")
-
-            if not (author and version and model_name):
-                return Response(
-                    {
-                        "error": "Either provide model_id or provide model_name, author and version"
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            model_obj, created = MLModel.objects.get_or_create(
-                model_name=model_name,
-                author=author,
-                version=version,
-            )
-            data["model_id"] = model_obj.id
+        model_obj, error_response = self._resolve_model_fullref(data)
+        if error_response is not None:
+            return error_response
+        data["model_id"] = model_obj.id
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -351,6 +503,47 @@ class PromptViewSet(viewsets.ModelViewSet):
 class BadgeViewSet(viewsets.ModelViewSet):
     queryset = Badge.objects.all()
     serializer_class = BadgeSerializer
+
+
+class UseCaseViewSet(viewsets.ModelViewSet):
+    queryset = (
+        UseCase.objects.all()
+        .select_related("user_id", "model_fullref")
+        .order_by("-created_at")
+    )
+    serializer_class = UseCaseSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
+    ]
+    filterset_class = UseCaseFilter
+    ordering_fields = ["id", "created_at", "model_fullref__model_name", "sphere"]
+    ordering = ["-created_at"]
+
+
+class UserReviewViewSet(viewsets.ModelViewSet):
+    queryset = (
+        UserReview.objects.all()
+        .select_related("user_id", "model_fullref")
+        .order_by("-created_at")
+    )
+    serializer_class = UserReviewSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    pagination_class = ReviewPagination
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
+    ]
+    filterset_class = UserReviewFilter
+    ordering_fields = [
+        "id",
+        "created_at",
+        "updated_at",
+        "rank",
+        "model_fullref__model_name",
+    ]
+    ordering = ["-created_at"]
 
 
 class RawUploadView(APIView):

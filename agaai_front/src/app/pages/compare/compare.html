@@ -1,49 +1,168 @@
 <div class="container" [style.background]="theme.bg" [style.color]="theme.text">
-  <a routerLink="/catalog" class="back">nazad</a>
-  <h1>Сравнение моделей</h1>
-  <p style="opacity: 0.5">Выберите до 3 моделей</p>
+  <a routerLink="/catalog" class="back">Back to catalog</a>
 
-  <div class="chips">
-    @for (m of models; track m.model_fullref) {
+  <section class="hero" [style.border]="'1px solid ' + theme.border">
+    <div>
+      <p class="eyebrow">Model comparison</p>
+      <h1>Compare ML records side by side</h1>
+      <p class="hero-copy">
+        Pick up to three records, then inspect their benchmarks, profiling signals, badges, freshness, and review
+        scores in one view.
+      </p>
+      <div class="hero-meta">
+        <span class="meta-chip">{{ records().length }} records loaded</span>
+        <span class="meta-chip">{{ selectedIds().length }}/3 selected</span>
+        <span class="meta-chip" *ngIf="selectedRecords().length">Showing {{ selectedRecords().length }} cards</span>
+      </div>
+    </div>
+    <span class="hero-badge">Visual compare</span>
+  </section>
+
+  <section class="selection-panel" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Selection</p>
+        <h2>Choose records to compare</h2>
+      </div>
+      <span class="panel-count">{{ selectedIds().length }} selected</span>
+    </div>
+
+    @if (loading()) {
+    <p class="empty-state">Loading records...</p>
+    } @else if (records().length) {
+    <div class="chip-grid">
+      @for (record of records(); track record.record_id) {
       <button
-        (click)="toggle(m)"
-        [style.background]="isSelected(m) ? '#38bdf8' : theme.input"
-        [style.color]="isSelected(m) ? '#000' : theme.text"
-        [style.opacity]="!isSelected(m) && selected.length === 3 ? '0.4' : '1'"
-        class="chip"
-      >{{ isSelected(m) ? '✓ ' : '' }}{{ m.custom_name }}</button>
+        class="record-chip"
+        type="button"
+        (click)="toggle(record)"
+        [class.record-chip--selected]="isSelected(record)"
+        [class.record-chip--disabled]="!isSelected(record) && !canSelectMore()"
+        [disabled]="!isSelected(record) && !canSelectMore()"
+      >
+        <span class="record-chip__title">{{ record.custom_name }}</span>
+        <span class="record-chip__meta">{{ record.model_fullref.model_name }}</span>
+      </button>
+      }
+    </div>
+    } @else {
+    <p class="empty-state">No records were returned by the API.</p>
     }
-  </div>
+  </section>
 
-  @if (selected.length >= 2) {
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th class="th">Параметр</th>
-            @for (m of selected; track m.model_fullref) {
-              <th class="th">{{ m.custom_name }}</th>
-            }
-          </tr>
-        </thead>
-        <tbody>
-          @for (f of fields; track f.key) {
-            <tr>
-              <td class="td-label">{{ f.label }}</td>
-              @for (m of selected; track m.model_fullref) {
-                <td class="td">{{ getValue(m, f.key) }}</td>
-              }
-            </tr>
+  @if (selectedRecords().length >= 2) {
+  <section class="compare-grid" [style.gridTemplateColumns]="compareGridTemplate()">
+    @for (record of selectedRecords(); track record.record_id) {
+    <article class="record-card" [style.border]="'1px solid ' + theme.border" [style.background]="theme.block">
+      <div class="record-card__header">
+        <div>
+          <p class="eyebrow">Record #{{ record.record_id }}</p>
+          <h3>{{ record.custom_name }}</h3>
+          <p class="record-subtitle">{{ modelSubtitle(record) }}</p>
+        </div>
+        <div>
+          <span>Average evaluated</span><span class="score-pill">{{ averageReviewLabel(record) }}</span>
+        </div>
+      </div>
+
+      <div class="record-stats">
+        <span class="stat-pill">Param_count: {{ record.model_fullref.param_count || 'Not specified' }}</span>
+        <span class="stat-pill">Is quantized:  {{ record.model_fullref.is_quantized  ? '✓' : '✕' }}</span>
+        <span class="stat-pill">Updated {{ record.updated_at | date: 'medium' }}</span>
+      </div>
+
+      <p class="record-description">{{ record.description }}</p>
+
+      @if (record.custom_note) {
+      <div class="note-box">
+        <p class="note-box__label">Custom note</p>
+        <p class="note-box__body">{{ record.custom_note }}</p>
+      </div>
+      }
+
+      <div class="section-block">
+        <div class="section-block__header">
+          <h4>Badges</h4>
+          <span>{{ record.badges?.length || 0 }} items</span>
+        </div>
+        @if (record.badges?.length) {
+        <div class="badge-list">
+          @for (badge of record.badges || []; track badge.name) {
+          <span class="badge-pill">{{ badge.name }}</span>
           }
-        </tbody>
-      </table>
-    </div>
-  }
+        </div>
+        } @else {
+        <p class="empty-inline">No badges assigned.</p>
+        }
+      </div>
 
-  @if (selected.length < 2) {
-    <div class="empty">
-      <p style="font-size: 40px">📊</p>
-      <p>Выберите минимум 2 модели</p>
+      <div class="section-block">
+        <div class="section-block__header">
+          <h4>Benchmarks</h4>
+          <span>Bars scale against the strongest selected record</span>
+        </div>
+        @if (record.benchmarks?.length) {
+        <div class="benchmark-list">
+          @for (benchmark of record.benchmarks || []; track benchmark.name) {
+          <div class="benchmark-row">
+            <div class="benchmark-row__top">
+              <span class="benchmark-name">{{ benchmark.name }}</span>
+              <span class="benchmark-value">{{ benchmarkLabel(record, benchmark.name) }}</span>
+            </div>
+            <div class="benchmark-track">
+              <div
+                class="benchmark-fill"
+                [style.width.%]="benchmarkFill(record, benchmark.name)"
+              ></div>
+            </div>
+            @if (benchmark.description) {
+            <p class="benchmark-desc">{{ benchmark.description }}</p>
+            }
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="empty-inline">No benchmarks available.</p>
+        }
+      </div>
+    </article>
+    }
+  </section>
+
+  <section class="matrix-panel" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Profiling</p>
+        <h2>Highest values show red, lowest values show green</h2>
+      </div>
+      <span class="panel-count">{{ profilingNames().length }} metrics</span>
     </div>
+
+    @if (profilingNames().length) {
+    <div class="matrix" [style.gridTemplateColumns]="profilingGridTemplate()">
+      <div class="matrix-head matrix-head--sticky">Metric</div>
+      @for (record of selectedRecords(); track record.record_id) {
+      <div class="matrix-head">{{ record.custom_name }}</div>
+      }
+
+      @for (metric of profilingNames(); track metric) {
+      <div class="matrix-label">{{ metric }}</div>
+      @for (record of selectedRecords(); track record.record_id) {
+      <div class="matrix-cell" [ngClass]="'matrix-cell--' + profilingState(record, metric)">
+        <span class="matrix-cell__value">{{ profilingValue(record, metric) || '—' }}</span>
+      </div>
+      }
+      }
+    </div>
+    } @else {
+    <p class="empty-state">No profiling entries were found for the selected records.</p>
+    }
+  </section>
+  } @else if (!loading()) {
+  <section class="empty-shell" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <p class="empty-emoji">📊</p>
+    <h2>Select at least two records</h2>
+    <p class="empty-copy">The compare view becomes a chart board once you select two or three model records above.</p>
+  </section>
   }
 </div>

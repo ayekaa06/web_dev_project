@@ -16,16 +16,210 @@
       </ul>
       <!-- <span class="badge">{{ model()?.badges?.[0]?.name || 'No badge' }}</span> -->
       <h1>{{ model()?.custom_name }}</h1>
-      <p>Unique reference name: {{ model()?.uniq_name}}</p>
+      <p>Unique reference name: {{ model()?.uniq_name ?? craftedUniqueName()}}</p>
       <p style="opacity: 0.7; margin-top: 2vh">{{ model()?.description }}</p>
+      <button class="add-btn" type="button" (click)="openDescriptionEditor()">Edit description</button>
+      <div *ngIf="isEditorOpen('description')" class="editor-inline">
+        <label class="form-label">Description</label>
+        <textarea [ngModel]="descriptionEdit()" (ngModelChange)="descriptionEdit.set($event)" rows="4" class="textarea"></textarea>
+        <div class="editor-actions">
+          <button class="save-btn" type="button" (click)="saveDescription()">Save</button>
+          <button class="toggle-btn" type="button" (click)="showEditor.set({ ...showEditor(), description: false })">Cancel</button>
+        </div>
+      </div>
     </div>
+
+    <div>
+      <button class="save-btn" type="button" (click)="parseSources()">Parse sources</button>
+      <button class="toggle-btn" type="button" (click)="getExperience()">Get shared experience</button>
+    </div>
+  </div>
+
+  <div class="social-grid">
+    <section class="panel" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+      <div class="panel-header">
+        <div>
+          <p class="section-kicker">User Reviews</p>
+          <h2>Community notes</h2>
+        </div>
+        <div class="panel-actions">
+          <span class="panel-count">{{ reviewCount() }} posts</span>
+          <button class="toggle-btn" type="button" (click)="toggleReviewsView()">
+            {{ reviewsExpanded() ? 'Collapse feed' : 'Expand feed' }}
+          </button>
+          <button class="toggle-btn" type="button" (click)="toggleReviewForm()">
+            {{ reviewFormExpanded() ? 'Hide form' : 'New review' }}
+          </button>
+        </div>
+      </div>
+
+      @if (reviewFormExpanded()) {
+      <form class="post-card review-form" (ngSubmit)="submitUserReview()">
+        <div class="post-top">
+          <div>
+            <p class="author-line">Write a review</p>
+            <p class="post-meta">Share results, risks, or deployment notes</p>
+          </div>
+          <span class="score-chip">New post</span>
+        </div>
+
+        <label class="form-label">Review text</label>
+        <textarea
+          class="review-input"
+          [(ngModel)]="userReviewForm.review_text"
+          name="review_text"
+          rows="4"
+          placeholder="What did this model do well, and where did it break?"
+        ></textarea>
+
+        <div class="review-actions">
+          <label class="form-label inline">
+            Rank
+            <select [(ngModel)]="userReviewForm.rank" name="rank">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="4">4</option>
+              <option [ngValue]="3">3</option>
+              <option [ngValue]="2">2</option>
+              <option [ngValue]="1">1</option>
+            </select>
+          </label>
+
+          <button class="submit-btn" type="submit">Publish review</button>
+        </div>
+      </form>
+      } @else {
+      <div class="collapsed-note">
+        <p class="empty-state">The review form is collapsed. Expand it to publish a new note.</p>
+      </div>
+      }
+
+      @if (reviewsExpanded()) {
+      @if (reviewsLoading()) {
+      <p class="empty-state">Loading reviews...</p>
+      } @else if (userReviews().length) {
+      <div class="feed">
+        @for (review of userReviews(); track review.id) {
+        <article class="post-card review-card">
+          <div class="post-top">
+            <div>
+              <p class="author-line">{{ review.user.username }}</p>
+              <p class="post-meta">
+                {{ review.created_at | date: 'medium' }}
+              </p>
+            </div>
+            <span class="score-chip">Rank {{ review.rank }}/5</span>
+          </div>
+          <p class="post-body">
+            {{ review.review_text || 'No review text provided yet.' }}
+          </p>
+        </article>
+        }
+      </div>
+
+      @if (hasReviewPagination()) {
+      <div class="pagination-row">
+        <button class="toggle-btn" type="button" (click)="goToReviewPage(reviewPage() - 1)" [disabled]="reviewPage() <= 1">
+          Previous
+        </button>
+        <span class="pagination-label">
+          Page {{ reviewPage() }} of {{ totalReviewPages() }}
+        </span>
+        <button
+          class="toggle-btn"
+          type="button"
+          (click)="goToReviewPage(reviewPage() + 1)"
+          [disabled]="reviewPage() >= totalReviewPages()"
+        >
+          Next
+        </button>
+      </div>
+      }
+      } @else {
+      <p class="empty-state">No user reviews yet for this record.</p>
+      }
+      } @else {
+      <div class="collapsed-note">
+        <p class="empty-state">The review feed is collapsed. Expand it to browse community notes.</p>
+      </div>
+      }
+    </section>
+
+    <section class="panel" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+      <div class="panel-header">
+        <div>
+          <p class="section-kicker">Use Cases</p>
+          <h2>Operational patterns</h2>
+        </div>
+        <a class="panel-link" [routerLink]="useCasesPageLink()" [queryParams]="useCasesPageQueryParams()">
+          View all
+        </a>
+      </div>
+
+      @if (previewUseCases().length) {
+      <div class="feed">
+        @for (useCase of previewUseCases(); track useCase.id) {
+        <article class="post-card usecase-card">
+          <div class="post-top">
+            <div>
+              <p class="author-line">{{ useCase.user.username }}</p>
+              <p class="post-meta">{{ useCase.created_at | date: 'medium' }}</p>
+            </div>
+            <span class="state-chip" [class.state-chip--muted]="!useCase.is_model_modified">
+              {{ useCase.is_model_modified ? 'Modified' : 'Baseline' }}
+            </span>
+          </div>
+
+          <h3 class="post-title">{{ useCase.sphere }}</h3>
+          <p class="post-body">{{ useCase.description }}</p>
+
+          <div class="chip-row" *ngIf="useCase.tags.length">
+            @for (tag of useCase.tags; track tag) {
+            <span class="chip">{{ tag }}</span>
+            }
+          </div>
+
+          <div class="dataset-row" *ngIf="useCase.datasets.length">
+            @for (dataset of useCase.datasets; track dataset) {
+            <span class="dataset-pill">{{ dataset }}</span>
+            }
+          </div>
+        </article>
+        }
+      </div>
+      } @else {
+      <p class="empty-state">No public use cases yet. Open the feed to check back later.</p>
+      }
+    </section>
   </div>
 
   <div class="grid">
     <div class="card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
-      <h3 class="card-title">Example of usage</h3>
-      <p>Location:</p>
-      <p></p>
+      <h3 class="card-title">Dependencies</h3>
+      <ul>
+        @for (d of model()?.dependencies || []; track d.name) {
+        <li>{{ d.name + (d.requirement ? (': ' + d.requirement) : '') }}</li>
+        }
+      </ul>
+      <button class="add-btn" (click)="openDependenciesEditor()">Edit dependencies</button>
+
+      <div *ngIf="isEditorOpen('dependencies')" class="editor-inline">
+        <label class="form-label">Edit dependencies</label>
+        <div *ngFor="let d of dependenciesEdit(); let i = index; track i" class="dependency-row">
+          <input class="input" [ngModel]="d.name" (ngModelChange)="updateDependencyField(i, 'name', $event)" placeholder="Name" />
+          <input class="input" [ngModel]="d.requirement" (ngModelChange)="updateDependencyField(i, 'requirement', $event)" placeholder="Requirement (e.g. >=2.0)" />
+          <input class="input" [ngModel]="d.url" (ngModelChange)="updateDependencyField(i, 'url', $event)" placeholder="URL (optional)" />
+          <button class="toggle-btn" type="button" (click)="removeDependency(i)">Remove</button>
+        </div>
+
+        <div class="editor-actions" style="margin-top:8px">
+          <button class="add-btn" type="button" (click)="addDependency()">Add dependency</button>
+        </div>
+
+        <div class="editor-actions" style="margin-top:8px">
+          <button class="save-btn" type="button" (click)="saveDependencies()">Save</button>
+          <button class="toggle-btn" (click)="showEditor.set({ ...showEditor(), dependencies: false })">Cancel</button>
+        </div>
+      </div>
     </div>
     <div class="card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
       <h3 class="card-title">Бенчмарки</h3>
@@ -34,6 +228,16 @@
       }
       <button class="add-btn" (click)="addAttribute('benchmarks')">Изменить бенчмарки</button>
     </div>
+  </div>
+
+  <div *ngIf="(model()?.profiling?.length || 0) > 0" class="card" [style.background]="theme.block" [style.border]="'1px solid ' + theme.border">
+    <h3 class="card-title">Profiling</h3>
+    <ul>
+      @for (p of model()?.profiling || []; track p.name) {
+      <li><strong>{{ p.name }}</strong>: {{ p.value }}</li>
+      }
+    </ul>
+    <button class="add-btn" (click)="addAttribute('profiling')">Edit profiling</button>
   </div>
 
   <div
@@ -92,6 +296,7 @@
     [model]="model()!"
     (fileUpload)="onArchitectureFileSelected($event)"
     (deleteFile)="onArchitectureFileDeleted($event)"
+    (jsonUploaded)="onArchitectureJsonUploaded($event)"
   ></app-architecture-viewer>
 
   <app-badges-editor
@@ -120,7 +325,15 @@
     <textarea [(ngModel)]="note" placeholder="Напишите что-нибудь..." class="textarea"></textarea>
     <button (click)="saveNote()" class="save-btn">Сохранить заметку</button>
   </div> -->
+
 </div>
+
+<div class="hero-actions">
+  <button class="delete-btn" type="button" (click)="confirmDeleteRecord()">Delete record</button>
+</div>
+
+
+
 
 <ng-template #notFound>
   <h2 style="color: #fff; padding: 30px">Not found</h2>

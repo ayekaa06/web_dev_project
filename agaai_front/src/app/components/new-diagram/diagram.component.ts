@@ -113,7 +113,9 @@ export class DiagramComponent implements AfterViewInit, OnDestroy {
   // ── Graph init ─────────────────────────────────────────────────────────────
 
   private initGraph(): void {
-    this.graph = new joint.dia.Graph();
+    this.graph = new joint.dia.Graph({}, { 
+      cellNamespace: joint.shapes 
+    });;
 
     this.paper = new joint.dia.Paper({
       el: this.canvasRef.nativeElement,

@@ -1,4 +1,7 @@
 from rest_framework import serializers
+from django.db.models import Avg
+
+from agaai_login.models import User
 
 from .models import (
     Badge,
@@ -55,7 +58,16 @@ class BadgeSerializer(serializers.ModelSerializer):
         fields = ["name", "description"]
 
 
+class UserSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
+
+
 class MLModelSerializer(serializers.ModelSerializer):
+    param_count = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    is_quantized = serializers.BooleanField(required=False)
+
     class Meta:
         model = MLModel
         fields = [
@@ -85,6 +97,8 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
         source="model_fullref", queryset=MLModel.objects.all(), write_only=True
     )
     record_id = serializers.IntegerField(source="id", required=False)
+    updated_at = serializers.DateTimeField(read_only=True)
+    average_review_rank = serializers.SerializerMethodField()
 
     benchmarks_input = serializers.ListField(
         child=serializers.DictField(), write_only=True, required=False
@@ -122,12 +136,18 @@ class MLModelRecordSerializer(serializers.ModelSerializer):
             "model_id",
             "prompts_input",
             "architecture",
+            "updated_at",
+            "average_review_rank",
         ]
         extra_kwargs = {
             "benchmarks": {"required": False},
             "prompts": {"required": False},
             "model_fullref": {"write_only": True},
         }
+
+    def get_average_review_rank(self, obj):
+        average = obj.model_fullref.reviews.aggregate(avg=Avg("rank")).get("avg")
+        return float(average) if average is not None else None
 
     def validate(self, attrs):
         # architecture upload validation moved to upload endpoint
@@ -263,27 +283,74 @@ class MLModelRecordPartialUpdateSerializer(serializers.ModelSerializer):
 
 
 class UseCaseSerializer(serializers.ModelSerializer):
+    user = UserSummarySerializer(source="user_id", read_only=True)
+    user_id = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    model_fullref = MLModelSerializer(read_only=True)
+    model_id = serializers.PrimaryKeyRelatedField(
+        source="model_fullref", queryset=MLModel.objects.all(), write_only=True
+    )
+
     class Meta:
         model = UseCase
         fields = [
             "id",
+            "user",
+            "user_id",
+            "model_fullref",
+            "model_id",
             "sphere",
             "tags",
-            "is_raw",
+            "is_model_modified",
             "description",
             "datasets",
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]
 
+    def validate(self, attrs):
+        if self.instance is not None:
+            attrs["user_id"] = self.instance.user_id
+        return attrs
+
 
 class UserReviewSerializer(serializers.ModelSerializer):
+    user = UserSummarySerializer(source="user_id", read_only=True)
+    user_id = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    model_fullref = MLModelSerializer(read_only=True)
+    model_id = serializers.PrimaryKeyRelatedField(
+        source="model_fullref", queryset=MLModel.objects.all(), write_only=True
+    )
+
     class Meta:
         model = UserReview
         fields = [
             "id",
+            "user",
+            "user_id",
+            "model_fullref",
+            "model_id",
             "review_text",
+            "rank",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+    def validate(self, attrs):
+        if self.instance is not None:
+            attrs["user_id"] = self.instance.user_id
+            attrs["model_fullref"] = self.instance.model_fullref
+
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        model_fullref = attrs.get("model_fullref")
+
+        if user and getattr(user, "is_authenticated", False) and model_fullref is not None:
+            existing = UserReview.objects.filter(user_id=user, model_fullref=model_fullref)
+            if self.instance is not None:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise serializers.ValidationError(
+                    {"model_id": "You already submitted a review for this model."}
+                )
+        return attrs

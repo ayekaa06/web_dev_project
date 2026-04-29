@@ -24,6 +24,8 @@ export type Model = {
   profiling?: Profiling[] | null;
   architecture?: ArchitectureFile[] | null;
   benchmarks?: Benchmark[] | null;
+  updated_at?: string;
+  average_review_rank?: number | null;
 };
 
 const MOCK_MODELS: Model[] = [

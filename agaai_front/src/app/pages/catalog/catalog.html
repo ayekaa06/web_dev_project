@@ -58,6 +58,16 @@
         <input [(ngModel)]="newModelForm.version" />
       </div>
       <div class="field-row">
+        <label>Param count</label>
+        <input type="text" [(ngModel)]="newModelForm.param_count" placeholder="7000000000" />
+      </div>
+      <div class="field-row">
+        <label class="checkbox-row">
+          <input type="checkbox" [(ngModel)]="newModelForm.is_quantized" />
+          <span>Quantized model</span>
+        </label>
+      </div>
+      <div class="field-row">
         <label>Description</label>
         <textarea [(ngModel)]="newModelForm.description"></textarea>
       </div>
@@ -214,12 +224,12 @@
 
       <div class="field-row">
         <label>Benchmark score greater than</label>
-        <input type="number" step="0.01" [(ngModel)]="advancedFilters.benchmark_score_gt" />
+        <input type="number" step="0.01" [(ngModel)]="advancedFilters.benchmark_value_gt" />
       </div>
 
       <div class="field-row">
         <label>Benchmark score less than</label>
-        <input type="number" step="0.01" [(ngModel)]="advancedFilters.benchmark_score_lt" />
+        <input type="number" step="0.01" [(ngModel)]="advancedFilters.benchmark_value_lt" />
       </div>
 
       <div class="field-row">
